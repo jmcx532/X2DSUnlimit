@@ -1,0 +1,7 @@
+﻿<Project Sdk="Fahrenheit.Sdk/1.0.0-alpha09">
+    <PropertyGroup>
+        <AssemblyName>X2DSUnlimit</AssemblyName>
+        <AssemblyTitle>X2DSUnlimit</AssemblyTitle>
+        <Product>X2DSUnlimit</Product>
+    </PropertyGroup>
+</Project>

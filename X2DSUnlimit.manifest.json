@@ -1,0 +1,11 @@
+{
+    "Id":"X2DSUnlimit",
+    "Name":"X2DSUnlimit",
+    "Desc":"A mod to increase the number of available dresspheres.",
+    "Authors": "jmcx532",
+    "Version":"1.0.0-alpha",
+    "Link":"https://github.com/jmcx532",
+    "Dependencies":[],
+    "LoadAfter":[],
+    "Flags":"NONE"
+}
