@@ -6,6 +6,7 @@
  */
 
 global using System.IO;
+global using System.Runtime.InteropServices;
 
 /* [fkelava 27/6/25 00:30]
  * This section is for Fahrenheit 'global using'.

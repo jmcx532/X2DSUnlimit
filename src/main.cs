@@ -1,25 +1,24 @@
 ﻿// SPDX-License-Identifier: MIT
 
-using Fahrenheit.FFX2;
-using System;
-using System.Runtime.InteropServices;
-using TerraFX.Interop.Windows;
-using TerraFX.Interop.WinRT;
-using static Fahrenheit.Mods.X2DSUnlimit.X2DSUnlimitModule;
+using TerraFX.Interop.DirectX;
 
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
 [FhLoad(FhGameId.FFX2)]
 public class X2DSUnlimitModule : FhModule {
 
-    //delegates
+    //delegates - main hooks
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate byte MsGetSaveDressUpCount(int param_1, uint param_2);
     private readonly FhMethodHandle<MsGetSaveDressUpCount> _MsGetSaveDressUpCount_handle;//60c730
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int kySetDefPlateWindow(short param_1, short param_2, int param_3, int param_4, int param_5);
-    private readonly FhMethodHandle<kySetDefPlateWindow> _kySetDefPlateWindow_handle;//5e5550
+    public delegate int MsAddSaveDreSphere(uint ds_id, int param_2);
+    private readonly FhMethodHandle<MsAddSaveDreSphere> _MsAddSaveDreSphere_handle;//60b260
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MsGetSaveDreSphere(uint ds_id);
+    private readonly FhMethodHandle<MsGetSaveDreSphere> _MsGetSaveDreSphere_handle;//60c710
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void F791610(int param_1, int param_2, int param_3);
@@ -34,17 +33,10 @@ public class X2DSUnlimitModule : FhModule {
     private readonly FhMethodHandle<kyGetUsedPoint> _kyGetUsedPoint_handle;//5eb480
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate uint MsGetSavePlate(uint param_1);
-    private readonly FhMethodHandle<MsGetSavePlate> _MsGetSavePlate_handle;//60cc00
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int MsAddSaveDreSphere(uint ds_id, int param_2);
-    private readonly FhMethodHandle<MsAddSaveDreSphere> _MsAddSaveDreSphere_handle;//60b260
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int kySetDefJobWindow(ushort param_1, ushort param_2, int param_3, int param_4, int param_5, int param_6);
     private readonly FhMethodHandle<kySetDefJobWindow> _kySetDefJobWindow_handle;//5e5470
 
+    // these 3 kyGetJobNum are used in Menus (at least)
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint kyGetJobNum();
     private readonly FhMethodHandle<kyGetJobNum> _kyGetJobNum_handle;//5ea7b0
@@ -57,6 +49,20 @@ public class X2DSUnlimitModule : FhModule {
     public delegate uint kyGetJobNum3();
     private readonly FhMethodHandle<kyGetJobNum3> _kyGetJobNum3_handle;//5ea8b0
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate byte kyGetCursorPoint(int param_1, int param_2);
+    private readonly FhMethodHandle<kyGetCursorPoint> _kyGetCursorPoint_handle;//5ea770
+
+    // delegates for utility and sub-functions
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MsCheckRange(int number, int lower_bound, int upper_bound);//624cd0
+    private readonly FhMethodHandle<MsCheckRange> _MsCheckRange_handle;
+
+
+    // these functions were hooked for debug/RE purposes - 08.06.26
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint MsGetSavePlate(uint param_1);
+    private readonly FhMethodHandle<MsGetSavePlate> _MsGetSavePlate_handle;//60cc00
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint MsGetSaveConfigChangeEffect();
@@ -67,21 +73,12 @@ public class X2DSUnlimitModule : FhModule {
     private readonly FhMethodHandle<MsGetRamConfigChangeEffect> _MsGetRamConfigChangeEffect_handle;//625c90
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int MsCheckRange(int number, int lower_bound, int upper_bound);//624cd0
-    private readonly FhMethodHandle<MsCheckRange> _MsCheckRange_handle;
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int MsGetSaveDreSphere(uint ds_id);
-    private readonly FhMethodHandle<MsGetSaveDreSphere> _MsGetSaveDreSphere_handle;//60c710
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate byte kyGetCursorPoint(int param_1, int param_2);
-    private readonly FhMethodHandle<kyGetCursorPoint> _kyGetCursorPoint_handle;//5ea770
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void kyEquipStart(int param_1);
     private readonly FhMethodHandle<kyEquipStart> _kyEquipStart_handle;// b5b900
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int kySetDefPlateWindow(short param_1, short param_2, int param_3, int param_4, int param_5);
+    private readonly FhMethodHandle<kySetDefPlateWindow> _kySetDefPlateWindow_handle;//5e5550
 
     //test hook of a void fx(void) thst has been reduced mostly to _aullshr()
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -89,17 +86,44 @@ public class X2DSUnlimitModule : FhModule {
     private readonly FhMethodHandle<kyIsUsedPoint> _kyIsUsedPoint_handle;// 5eb9e0
 
 
-    public X2DSUnlimitModule() {
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMenuMakeJobList(int param_1);
+    private readonly FhMethodHandle<TOMenuMakeJobList> _TOMenuMakeJobList_handle; //778b00
+
+    // thunk at 87dd24
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void* memset(void* _Dst, int _Val, uint _Size);
+    private memset _memset = FhUtil.get_fptr<memset>(0x47dd24);
+
+    
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMenuMakeJobAbilityList(uint param_1, uint param_2);
+    private TOMenuMakeJobAbilityList _TOMenuMakeJobAbilityList = FhUtil.get_fptr<TOMenuMakeJobAbilityList>(0x3788d0);//7788d0
+    
+
+    // GG Icon fix for LG/Freelancer
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_5E7580(int param_1, int param_2, int icon, uint param_4);
+    private readonly FhMethodHandle<FUN_5E7580> _FUN_5E7580_handle; //5e7580
+
+
+    public unsafe X2DSUnlimitModule() {
         int addr_offset = 0x400000;
 
         _MsAddSaveDreSphere_handle = new FhMethodHandle<MsAddSaveDreSphere>(this, "FFX-2.exe", 0x60b260 - addr_offset, h_MsAddSaveDreSphere);
-        _MsCheckRange_handle = new FhMethodHandle<MsCheckRange>(this, "FFX-2.exe", 0x624cd0 - addr_offset, h_MsCheckRange);
         _MsGetSaveDreSphere_handle = new FhMethodHandle<MsGetSaveDreSphere>(this, "FFX-2.exe", 0x60c710 - addr_offset, h_MsGetSaveDreSphere);
+        _MsCheckRange_handle = new FhMethodHandle<MsCheckRange>(this, "FFX-2.exe", 0x624cd0 - addr_offset, h_MsCheckRange);
+        
         _kyEquipStart_handle = new FhMethodHandle<kyEquipStart>(this, "FFX-2.exe", 0xb5b900 - addr_offset, h_kyEquipStart);
         _kySetDefJobWindow_handle = new FhMethodHandle<kySetDefJobWindow>(this, "FFX-2.exe", 0x5e5470 - addr_offset, h_kySetDefJobWindow);
+
         _kyGetJobNum_handle = new FhMethodHandle<kyGetJobNum>(this, "FFX-2.exe", 0x5ea7b0 - addr_offset, h_kyGetJobNum);
         _kyGetJobNum2_handle = new FhMethodHandle<kyGetJobNum2>(this, "FFX-2.exe", 0x5ea810 - addr_offset, h_kyGetJobNum2);
         _kyGetJobNum3_handle = new FhMethodHandle<kyGetJobNum3>(this, "FFX-2.exe", 0x5ea8b0 - addr_offset, h_kyGetJobNum3);
+        _TOMenuMakeJobList_handle = new FhMethodHandle<TOMenuMakeJobList>(this, "FFX-2.exe", 0x778b00 - addr_offset, h_TOMenuMakeJobList);
+
+        _FUN_5E7580_handle = new FhMethodHandle<FUN_5E7580>(this, "FFX-2.exe", 0x5e7580 - addr_offset, h_FUN_5E7580);
 
         _kyGetCursorPoint_handle = new FhMethodHandle<kyGetCursorPoint>(this, "FFX-2.exe", 0x5ea770 - addr_offset, h_kyGetCursorPoint);
         _kyIsUsedPoint_handle = new FhMethodHandle<kyIsUsedPoint>(this, "FFX-2.exe", 0x5eb9e0 - addr_offset, h_kyIsUsedPoint);
@@ -113,6 +137,43 @@ public class X2DSUnlimitModule : FhModule {
 
         _MsGetSaveConfigChangeEffect_handle = new FhMethodHandle<MsGetSaveConfigChangeEffect>(this, "FFX-2.exe", 0x60c650 - addr_offset, h_MsGetSaveConfigChangeEffect);
         _MsGetRamConfigChangeEffect_handle = new FhMethodHandle<MsGetRamConfigChangeEffect>(this, "FFX-2.exe", 0x625c90 - addr_offset, h_MsGetRamConfigChangeEffect);
+    }
+
+    // param_1 and 2 tell where it is drawn (special game co-ord system - not based on resolution)
+    /* Icon map (param_3_
+     * 1,2 -> Red/Green Gate
+     * 3,4
+     * 5,6 -> Shiny Grey orb, ?? (1: used as bg for some Dressspheres, 2: gate background orb.) Use standalone for LG/FL?
+     * 7,14 ->, Gunner/Songstress
+     * 8, -> gun mage
+     * 21, 22 -> Psychic/Festivalist
+     * 23, 24, 25 -> Floral Fallal, Machina Maw, Full Throttle
+     * 26, 27 -> greyORBluish flash/pulsing, Yellow flash/pulsing
+     * 28,29,30 -> nope
+     * 99 -> Full Throttle
+     */
+    // fix LG/FL showing blank icon on Garment Grid
+    public void h_FUN_5E7580(int grid_x, int grid_y, int icon, uint param_4)
+    {
+        //_logger.Info("Param_1 is: " + param_1.ToString());
+        //_logger.Info("Param_2 is: " + param_2.ToString());
+        //_logger.Info("Param_3 is: " + icon.ToString());
+        //_logger.Info("Param_4 is: " + param_4.ToString());
+
+        if (icon == 38) // FL or LG
+        {
+            _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, 26, param_4);
+            return;
+        }
+
+        if (icon == 39) // FL or LG
+        {
+            _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, 27, param_4);
+            return;
+        }
+
+
+        _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, icon, param_4);
     }
 
     public int h_kySetDefPlateWindow(short param_1, short param_2, int param_3, int param_4, int param_5)
@@ -133,9 +194,9 @@ public class X2DSUnlimitModule : FhModule {
     // P3 is a large number, dont think it's a memory address (chr or party data?) (Seems to point after voicemapper if it is?)
     public void h_F791610(int param_1, int param_2, int param_3)
     {
-        _logger.Info("Param_1 is: " + param_1.ToString("X"));
-        _logger.Info("Param_2 is: " + param_2.ToString());
-        _logger.Info("Param_3 is: " + param_3.ToString());
+        //_logger.Info("Param_1 is: " + param_1.ToString("X"));
+        //_logger.Info("Param_2 is: " + param_2.ToString());
+        //_logger.Info("Param_3 is: " + param_3.ToString());
 
         if (param_1 == 0x25) // on spherechange
         {
@@ -188,13 +249,14 @@ public class X2DSUnlimitModule : FhModule {
         
     }
 
+    // read config dressphere animations setting
     public uint h_MsGetSaveConfigChangeEffect()
     {
         uint original_result = _MsGetSaveConfigChangeEffect_handle.orig_fptr.Invoke();
         _logger.Info("Return result is: " + original_result.ToString());
         return original_result;
     }
-
+    // read config dressphere animations setting
     public uint h_MsGetRamConfigChangeEffect()
     {
         uint original_result = _MsGetRamConfigChangeEffect_handle.orig_fptr.Invoke();
@@ -214,6 +276,7 @@ public class X2DSUnlimitModule : FhModule {
     }
 
     // reads garment grid data, builds a list of unique IDs on grid, returns number of unique ds ids.
+    // safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
     public unsafe int h_kyGetUsedPoint()
     {
 
@@ -252,6 +315,7 @@ public class X2DSUnlimitModule : FhModule {
     }
 
     // takes a plate id and slot number, and returns the dressphere ID.
+    // safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
     public uint h_kyIsUsedPoint(uint plate_id, uint gg_slot)
     {
         // uint original_result = _kyIsUsedPoint_handle.orig_fptr.Invoke(param_1, param_2);
@@ -265,11 +329,12 @@ public class X2DSUnlimitModule : FhModule {
     }
 
     // takes a chr_id and a Garment Grid ID, and returns which slot their equipped/highlighted? dressphere is in.
+    // safety hook, this function reads game memory, messing with dressphere IDs (Freelancer/LG) in Garment Grid data can produce bad reads and crash the game
     public byte h_kyGetCursorPoint(int chr_id, int plate_id)
     {
         //byte original_result = _kyGetCursorPoint_handle.orig_fptr.Invoke(param_1, param_2);
 
-        // should MAYBE prevent crashes with 32, but surely no?
+        // should prevent crashes with GG slot in memory set to 32 (Freelancer)
         if (chr_id == 0x01000000) { return _kyGetCursorPoint_handle.orig_fptr.Invoke(0, plate_id);}
 
         //_logger.Info("kyGetCursorPoint param_1: " + chr_id.ToString());
@@ -281,11 +346,13 @@ public class X2DSUnlimitModule : FhModule {
         return slot;
     }
 
+
     public uint h_MsGetSavePlate(uint param_1)
     {
         return _MsGetSavePlate_handle.orig_fptr.Invoke(param_1);
     }
 
+    // safety hook, this function in the original calls _aullshr() which takes in Garment Grid data manipulates it and the game can use this for memory reads. With new dressphere IDs, it could cause issues.
     //returns the number of Garment Grids owned. Populates the GG Inventory list, keeps a record of plates with spheres on them etc.
     public unsafe int h_kyGetResultPlateNum()
     {
@@ -311,11 +378,10 @@ public class X2DSUnlimitModule : FhModule {
             if (0 < plateOwned)
             {   
 
+                // lop that reads each byte of GGrid data (which is 32 bytes long), used to increment a var that tracks if a grid has spheres set
                 for (int i = 0; i < 32; i++)
                 {
                     int plate_data_base = FhUtil.get_at<int>(0x9f5fc0);
-                    //byte* plateData = FhUtil.ptr_at<byte>(0x9f5fc0);
-
                     if ( *(byte*)(plate_data_base + (plate_id * 32) + i) != 0){
                         num_plates_with_spheres ++;
                         break;
@@ -333,7 +399,7 @@ public class X2DSUnlimitModule : FhModule {
                 local_c = iVar3;
             }
             plate_id = plate_id + 1;
-        } while (plate_id < 0x40);
+        } while (plate_id < 0x40);//0x40 is number of Grids
 
         //DAT_00df6d88 = iVar4; // number of Grids that have Dresspheres on them.
         FhUtil.set_at<int>(0x9f6d88, num_plates_with_spheres); // number of Grids that have Dresspheres on them.
@@ -341,11 +407,12 @@ public class X2DSUnlimitModule : FhModule {
         return iVar3; // return number of owned Garment Grids
     }
 
+    //returns the owned quantity of a given dressphere
     public unsafe int h_MsGetSaveDreSphere(uint ds_id)
 
     {
         //if ((param_1 & 0xfff) < 0x1e)
-        if ((ds_id & 0xfff) < 0x28) // increased limit
+        if ((ds_id & 0xfff) < 0x22) // increased limit
         {
             byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c);
             return (int)*(byte*)(DAT_00E00D1C + (ds_id & 0xfff));
@@ -356,18 +423,19 @@ public class X2DSUnlimitModule : FhModule {
     //returns the number of owned dresspheres. And.....
     public int h_kySetDefJobWindow(ushort param_1, ushort param_2, int param_3, int param_4, int param_5, int param_6)
     {
-        _logger.Info("Param_1: " + param_1.ToString());
-        _logger.Info("Param_2: " + param_2.ToString());
-        _logger.Info("Param_3: " + param_3.ToString());
-        _logger.Info("Param_4: " + param_4.ToString("X"));
-        _logger.Info("Param_5: " + param_5.ToString("X"));
-        _logger.Info("Param_6: " + param_6.ToString()); // GG Menu: 0, DS Menu: 1, Abilities Menu: 2
+        //_logger.Info("Param_1: " + param_1.ToString());
+        //_logger.Info("Param_2: " + param_2.ToString());
+        //_logger.Info("Param_3: " + param_3.ToString());
+        //_logger.Info("Param_4: " + param_4.ToString("X"));
+        //_logger.Info("Param_5: " + param_5.ToString("X"));
+        //_logger.Info("Param_6: " + param_6.ToString()); // GG Menu: 0, DS Menu: 1, Abilities Menu: 2
 
         int original_result = _kySetDefJobWindow_handle.orig_fptr.Invoke(param_1, param_2, param_3, param_4, param_5, param_6);
         _logger.Info("Return result: " + original_result.ToString());
         return original_result;
     }
 
+    //replaces lookup table at: ffx-2.exe + cc36cc
     private static readonly ushort[] CustomDsLookupTable =
 {
     0x0001, 0x0002, 0x0003, 0x0004, 0x0005,
@@ -376,7 +444,7 @@ public class X2DSUnlimitModule : FhModule {
     0x001d, 0x001f, 0x0020, 0x0021, 0x0022
 };
 
-    // Used in Garment Grid Menu
+    // Used in Garment Grid Menu, necessary for Freelancer/Leblanc Goon to show up in Dressphere List
     public unsafe uint h_kyGetJobNum()
     {
         int iVar1;
@@ -414,14 +482,14 @@ public class X2DSUnlimitModule : FhModule {
         return original_result;
     }
 
-    // Used for Abilities Menu
+    // Used for Abilities Menu, necessary for Freelancer and Leblanc Goon to show up in job list
     public unsafe uint h_kyGetJobNum3()
     {
         byte bVar1;
         int iVar2;
         int iVar3;
         uint number_of_elements;
-        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);
+        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);// list of dressphere IDs (byte), unique ones on current grid, 
 
         byte* ds_amount =  FhUtil.ptr_at<byte>(0x9f6018); //this is speculative
 
@@ -470,6 +538,135 @@ public class X2DSUnlimitModule : FhModule {
         //return original_result;
     }
 
+    //adds Freelancer/Leblanc Goon to abilities menu job list
+    public unsafe void h_TOMenuMakeJobList(int chr_id)
+    {
+        //int iVar1;
+        uint job_idNum_toCheck;
+        //undefined4* puVar3;
+        uint* puVar3 = FhUtil.ptr_at<uint>(0xdbb208);
+        nint puVar3_addr = (nint)puVar3;
+        //uint* puVar4;
+        uint job_id;
+
+
+        // memory overwrite loop
+        for (int i = 0; i < 32; i++)
+        {
+            puVar3[-2] = 0;
+            puVar3[-1] = 0xff;
+            puVar3[0] = 0;
+            puVar3[1] = 0;
+
+            _memset(puVar3 + 2, 0, 0x100);
+
+            puVar3 += 0x44;
+        }
+
+        
+        FhUtil.set_at<byte>(0x12c0265, 0);
+        FhUtil.set_at<byte>(0x12c0266, 0);// abilities menu: dressphere id viewing/last viewed
+
+        job_idNum_toCheck = 0;
+        uint* puVar4 = FhUtil.ptr_at<uint>(0xdbb204);
+
+        // entry < 34 -> 34 is the nww max jobs to look through, added LG and Freelancer
+        for (int entry = 0; entry < 34; entry++)
+        {
+            job_id = job_idNum_toCheck | 0x5000;
+
+            bool validJob = false;
+
+            switch (job_id)
+            {
+                case 0x5001:
+                case 0x5002:
+                case 0x5003:
+                case 0x5004:
+                case 0x5005:
+                case 0x5006:
+                case 0x5007:
+                case 0x5008:
+                case 0x5009:
+                case 0x500A:
+                case 0x500B:
+                case 0x500C:
+                case 0x500D:
+                case 0x500E:
+                case 0x501C:
+                case 0x501D:
+                case 0x5020: // Freelancer
+                case 0x5021: // Leblanc Goon
+
+                    if (h_MsGetSaveDreSphere(job_id) != 0)// if dressphere obtained/in inventory
+                    {
+                        validJob = true;
+                        _TOMenuMakeJobAbilityList((uint)chr_id, job_id);
+                    }
+                    break;
+
+                case 0x500F:
+                case 0x5010:
+                case 0x5011:
+
+                    if (chr_id == 0 &&
+                        h_MsGetSaveDreSphere(0x500F) != 0)
+                    {
+                        validJob = true;
+                        _TOMenuMakeJobAbilityList(0, job_id);
+                    }
+                    break;
+
+                case 0x5012:
+                case 0x5013:
+                case 0x5014:
+
+                    if (chr_id == 1 &&
+                        h_MsGetSaveDreSphere(0x5012) != 0)
+                    {
+                        validJob = true;
+                        _TOMenuMakeJobAbilityList(1, job_id);
+                    }
+                    break;
+
+                case 0x5015:
+                case 0x5016:
+                case 0x5017:
+
+                    if (chr_id == 2 &&
+                        h_MsGetSaveDreSphere(0x5015) != 0)
+                    {
+                        validJob = true;
+                        _TOMenuMakeJobAbilityList(2, job_id);
+                    }
+                    break;
+            }
+
+            if (validJob)
+            {
+                puVar4[-1] = 1;
+                puVar4[0] = job_id;
+
+                byte count = FhUtil.get_at<byte>(0x12c0265);
+                FhUtil.set_at<byte>(0x12c0265, (byte)(count + 1));
+            }
+            else
+            {
+                puVar4[-1] = 0;
+                puVar4[0] = 0xff;
+                puVar4[1] = 0;
+                puVar4[2] = 0;
+            }
+
+            puVar4 += 0x44;
+            job_idNum_toCheck++;
+        }
+
+        //_TOMenuMakeJobList_handle.orig_fptr.Invoke(param_1);
+    }
+
+    // makes obtaining LG/Freelancer implement dressphere quantity.
+    // currently overwrites vanilla game memory that seemed to have 0s for space. Move in future for safety/expandability
     public unsafe int h_MsAddSaveDreSphere(uint param_1, int param_2)
     {
         int iVar1;
@@ -502,14 +699,16 @@ public class X2DSUnlimitModule : FhModule {
             && _MsGetSaveConfigChangeEffect_handle.hook()
             && _MsGetRamConfigChangeEffect_handle.hook()
             && _MsGetSaveDressUpCount_handle.hook()
-            && _kySetDefJobWindow_handle.hook()
+            //&& _kySetDefJobWindow_handle.hook()
             && _kyGetJobNum_handle.hook()
             && _kyGetJobNum2_handle.hook()
             && _kyGetJobNum3_handle.hook()
+            && _TOMenuMakeJobList_handle.hook()
             && _F791610_handle.hook()
             && _MsGetSavePlate_handle.hook()
-            && _kyGetResultPlateNum_handle.hook()
-            && _kyGetUsedPoint_handle.hook();
+            //&& _kyGetResultPlateNum_handle.hook()
+            && _kyGetUsedPoint_handle.hook()
+            && _FUN_5E7580_handle.hook();
             //&& _kySetDefPlateWindow_handle.hook();
     }
 
