@@ -1,7 +1,5 @@
 ﻿// SPDX-License-Identifier: MIT
 
-using TerraFX.Interop.DirectX;
-
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
 [FhLoad(FhGameId.FFX2)]
@@ -108,6 +106,9 @@ public class X2DSUnlimitModule : FhModule {
     private readonly FhMethodHandle<FUN_5E7580> _FUN_5E7580_handle; //5e7580
 
 
+    public static byte freelancer_quantity = 0;
+    public static byte leblanc_goon_quantity = 0;
+
     public unsafe X2DSUnlimitModule() {
         int addr_offset = 0x400000;
 
@@ -137,6 +138,18 @@ public class X2DSUnlimitModule : FhModule {
 
         _MsGetSaveConfigChangeEffect_handle = new FhMethodHandle<MsGetSaveConfigChangeEffect>(this, "FFX-2.exe", 0x60c650 - addr_offset, h_MsGetSaveConfigChangeEffect);
         _MsGetRamConfigChangeEffect_handle = new FhMethodHandle<MsGetRamConfigChangeEffect>(this, "FFX-2.exe", 0x625c90 - addr_offset, h_MsGetRamConfigChangeEffect);
+    }
+
+    private class X2DSUnlimitState
+    {
+        public byte freelancer_quantity { get; set; }
+        public byte leblanc_goon_quantity { get; set; }
+
+        public X2DSUnlimitState()
+        {
+            this.freelancer_quantity = X2DSUnlimitModule.freelancer_quantity;
+            this.leblanc_goon_quantity = X2DSUnlimitModule.leblanc_goon_quantity;
+        }
     }
 
     // param_1 and 2 tell where it is drawn (special game co-ord system - not based on resolution)
@@ -231,14 +244,14 @@ public class X2DSUnlimitModule : FhModule {
     public byte h_MsGetSaveDressUpCount(int param_1, uint param_2)
     {
 
-        _logger.Info("Param_1 is: " + param_1.ToString());
-        _logger.Info("Param_2 is: " + param_2.ToString());
+        //_logger.Info("Param_1 is: " + param_1.ToString());
+        //_logger.Info("Param_2 is: " + param_2.ToString());
         byte original_result = _MsGetSaveDressUpCount_handle.orig_fptr.Invoke(param_1, param_2);
-        _logger.Info("Return result is: " + original_result.ToString());
+        //_logger.Info("Return result is: " + original_result.ToString());
 
         if (original_result < 2)
         {
-            _logger.Info("Overiding return");
+            //_logger.Info("Overiding return");
             return 77;
         }
         else
@@ -405,19 +418,6 @@ public class X2DSUnlimitModule : FhModule {
         FhUtil.set_at<int>(0x9f6d88, num_plates_with_spheres); // number of Grids that have Dresspheres on them.
 
         return iVar3; // return number of owned Garment Grids
-    }
-
-    //returns the owned quantity of a given dressphere
-    public unsafe int h_MsGetSaveDreSphere(uint ds_id)
-
-    {
-        //if ((param_1 & 0xfff) < 0x1e)
-        if ((ds_id & 0xfff) < 0x22) // increased limit
-        {
-            byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c);
-            return (int)*(byte*)(DAT_00E00D1C + (ds_id & 0xfff));
-        }
-        return 0;
     }
 
     //returns the number of owned dresspheres. And.....
@@ -665,25 +665,68 @@ public class X2DSUnlimitModule : FhModule {
         //_TOMenuMakeJobList_handle.orig_fptr.Invoke(param_1);
     }
 
+    //returns the owned quantity of a given dressphere
+    public unsafe int h_MsGetSaveDreSphere(uint ds_id)
+
+    {
+        //Freelancer, Leblanc Goon +
+        if ((ds_id & 0xfff) > 0x1e)
+        {
+            switch(ds_id & 0xfff)
+            {
+                case 0x20:
+                    return freelancer_quantity;
+                case 0x21:
+                    return leblanc_goon_quantity;
+                default:
+                    return 0;
+            }
+        }
+
+        // Vanilla dresspheres
+        if ((ds_id & 0xfff) < 0x1e)
+        {
+            byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c);
+            return (int)*(byte*)(DAT_00E00D1C + (ds_id & 0xfff));
+        }
+
+        return 0;
+    }
+
     // makes obtaining LG/Freelancer implement dressphere quantity.
     // currently overwrites vanilla game memory that seemed to have 0s for space. Move in future for safety/expandability
-    public unsafe int h_MsAddSaveDreSphere(uint param_1, int param_2)
+    public unsafe int h_MsAddSaveDreSphere(uint ds_id, int param_2)
     {
-        int iVar1;
+        int quantity;
 
         //int* DAT_00e00d1c = FhUtil.ptr_at<int>(0xa00d1c);
         byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c);
+        ds_id = ds_id & 0xfff;
 
-        param_1 = param_1 & 0xfff;
-        if (param_1 < 0x22) // increase limit
+        // Freelance, Leblanc Goon +
+        if (ds_id > 0x1e)
         {
-            iVar1 = h_MsCheckRange(*(byte*)(DAT_00E00D1C + param_1) + param_2, 0, 99);
+            switch (ds_id)
+            {
+                case 0x20:
+                    freelancer_quantity = (byte)Math.Min(freelancer_quantity + 1, 99);
+                    return freelancer_quantity;
+                case 0x21:
+                    leblanc_goon_quantity = (byte)Math.Min(leblanc_goon_quantity + 1, 99);
+                    return leblanc_goon_quantity;
+            }
+        }
+
+        //vanilla
+        if (ds_id < 0x1e)
+        {
+            quantity = h_MsCheckRange(*(byte*)(DAT_00E00D1C + ds_id) + param_2, 0, 99);
             
-            *(byte*)(DAT_00E00D1C + param_1) = (byte)iVar1;
+            *(byte*)(DAT_00E00D1C + ds_id) = (byte)quantity;
 
             //(&DAT_00e00d1c)[param_1] = (byte)iVar1;
 
-            return iVar1;
+            return quantity;
         }
         return 0;
     }
@@ -712,6 +755,20 @@ public class X2DSUnlimitModule : FhModule {
             //&& _kySetDefPlateWindow_handle.hook();
     }
 
-    public override void load_local_state(FileStream? local_state_file, FhLocalStateInfo local_state_info) { }
-    public override void save_local_state(FileStream  local_state_file)                                    { }
+    public override void load_local_state(FileStream? local_state_file, FhLocalStateInfo local_state_info) 
+    {
+        var loaded_state = JsonSerializer.Deserialize<X2DSUnlimitState>(local_state_file);
+
+        if (loaded_state != null)
+        {
+            freelancer_quantity = loaded_state.freelancer_quantity;
+            leblanc_goon_quantity = loaded_state.leblanc_goon_quantity;
+        }
+    }
+    public override void save_local_state(FileStream  local_state_file)
+    {
+        X2DSUnlimitState  state = new();
+        JsonSerializer.Serialize(local_state_file, state);
+        local_state_file.SetLength(local_state_file.Position);
+    }
 }

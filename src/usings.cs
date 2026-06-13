@@ -5,8 +5,12 @@
  * 'global using' are project-scoped. They do not leak outside of your mod's source.
  */
 
+
+global using System;
+global using System.Text.Json;
 global using System.IO;
 global using System.Runtime.InteropServices;
+global using Hexa.NET.ImGui;
 
 /* [fkelava 27/6/25 00:30]
  * This section is for Fahrenheit 'global using'.
@@ -15,6 +19,6 @@ global using System.Runtime.InteropServices;
  * Importing both at once may require you to define aliases to resolve ambiguous types.
  */
 
-global using Fahrenheit;
+//global using Fahrenheit;
 //global using Fahrenheit.FFX;
 //global using Fahrenheit.FFX2;

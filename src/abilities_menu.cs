@@ -1,12 +1,5 @@
 ﻿// SPDX-License-Identifier: MIT
 
-using Fahrenheit.Mods.X2DSUnlimit;
-using Hexa.NET.ImGui;
-using System.Numerics;
-using TerraFX.Interop.Windows;
-using static Fahrenheit.Mods.X2DSUnlimit.X2DSUnlimitAbilitiesMenu;
-using static Fahrenheit.Mods.X2DSUnlimit.X2DSUnlimitModule;
-
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
 [FhLoad(FhGameId.FFX2)]
@@ -148,6 +141,7 @@ public class X2DSUnlimitAbilitiesMenu : FhModule {
 
 
     //Freelancer/Leblanc Goon ID's appended to mod copt of DAT_00D63e78 table (ffx-2.exe + 0x963e78)
+    //TOMsJobAbilityWindow+
     private static readonly ushort[] CustomTOMSJAW_DS_Table =
 {
     0x5000, 0x5001, 0x5002, 0x5003, 0x5004, 0x5005,
