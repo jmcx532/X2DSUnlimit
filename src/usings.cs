@@ -11,6 +11,8 @@ global using System.Text.Json;
 global using System.IO;
 global using System.Runtime.InteropServices;
 global using Hexa.NET.ImGui;
+global using System.Runtime.CompilerServices;
+global using System.Numerics;
 
 /* [fkelava 27/6/25 00:30]
  * This section is for Fahrenheit 'global using'.
