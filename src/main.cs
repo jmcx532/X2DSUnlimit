@@ -2,8 +2,17 @@
 
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
+
+
 [FhLoad(FhGameId.FFX2)]
 public partial class X2DSUnlimitModule : FhModule {
+
+    // extra Job definitions
+    private unsafe Job* rikku_freelancer_ptr;
+    private unsafe Job* rikku_leblancgoon_ptr;
+
+    private unsafe Job* paine_freelancer_ptr;
+    private unsafe Job* paine_leblancgoon_ptr;
 
     // Local state / save state
     public static byte freelancer_quantity = 0;
@@ -88,6 +97,7 @@ public partial class X2DSUnlimitModule : FhModule {
         //abilites menu, ability list
         _kyGetJobNum3_handle = new FhMethodHandle<kyGetJobNum3>(this, "FFX-2.exe", 0x5ea8b0 - addr_offset, h_kyGetJobNum3);
         _TOMenuMakeJobList_handle = new FhMethodHandle<TOMenuMakeJobList>(this, "FFX-2.exe", 0x778b00 - addr_offset, h_TOMenuMakeJobList);
+        _memset_handle = new FhMethodHandle<memset>(this, "FFX-2.exe", 0x87dd24 - addr_offset, h_memset);
         _TOMenuMakeJobAbilityList_handle = new FhMethodHandle<TOMenuMakeJobAbilityList>(this, "FFX-2.exe", 0x7788d0 - addr_offset, h_TOMenuMakeJobAbilityList);
         _TOMenuStartJobAbilityWindow_handle = new FhMethodHandle<TOMenuStartJobAbilityWindow>(this, "FFX-2.exe", 0x778f70 - addr_offset, h_TOMenuStartJobAbilityWindow);
 
@@ -97,34 +107,203 @@ public partial class X2DSUnlimitModule : FhModule {
         _MsGetSaveLearn_handle = new FhMethodHandle<MsGetSaveLearn>(this, "FFX-2.exe", 0x60ca70 - addr_offset, h_MsGetSaveLearn);
         _MsSetSaveLearn_handle = new FhMethodHandle<MsSetSaveLearn>(this, "FFX-2.exe", 0x60E270 - addr_offset, h_MsSetSaveLearn);
 
-        
+        _MsGetChrNum_handle = new FhMethodHandle<MsGetChrNum>(this, "FFX-2.exe", 0x60c1a0 - addr_offset, h_MsGetChrNum);
+        _MsCalcChrLevel_handle = new FhMethodHandle<MsCalcChrLevel>(this, "FFX-2.exe", 0x617140 - addr_offset, h_MsCalcChrLevel);
+
+        _MsGetComData_handle = new FhMethodHandle<MsGetComData>(this, "FFX-2.exe", 0x625160 - addr_offset, h_MsGetComData);
+        _MsGetRomAbility_handle = new FhMethodHandle<MsGetRomAbility>(this, "FFX-2.exe", 0x61de50 - addr_offset, h_MsGetRomAbility);
+        _MsBtlMonsterSaveNumCheck_handle = new FhMethodHandle<MsBtlMonsterSaveNumCheck>(this, "FFX-2.exe", 0x610440 - addr_offset, h_MsBtlMonsterSaveNumCheck);
+        _MsCheckAbility_handle = new FhMethodHandle<MsCheckAbility>(this, "FFX-2.exe", 0x629280 - addr_offset, h_MsCheckAbility);
+        _FUN_6294f0_handle = new FhMethodHandle<FUN_6294f0>(this, "FFX-2.exe", 0x6294f0 - addr_offset, h_FUN_6294f0);
+        _MsCheckLearnCommand_handle = new FhMethodHandle<MsCheckLearnCommand>(this, "FFX-2.exe", 0x635790 - addr_offset, h_MsCheckLearnCommand);
+        _MsGetSaveCommand_handle = new FhMethodHandle<MsGetSaveCommand>(this, "FFX-2.exe", 0x60c500 - addr_offset, h_MsGetSaveCommand);
+
+        _MsGetSaveAp_handle = new FhMethodHandle<MsGetSaveAp>(this, "FFX-2.exe", 0x60c2e0 - addr_offset, h_MsGetSaveAp);
+        _MsGetSaveNeedAp_handle = new FhMethodHandle<MsGetSaveNeedAp>(this, "FFX-2.exe", 0x60cb20 - addr_offset, h_MsGetSaveNeedAp);
+        _MsGetJobNumBasic_handle = new FhMethodHandle<MsGetJobNumBasic>(this, "FFX-2.exe", 0x61de30 - addr_offset, h_MsGetJobNumBasic);
+        _MsBtlPlayerSaveNumCheck_handle = new FhMethodHandle<MsBtlPlayerSaveNumCheck>(this, "FFX-2.exe", 0x610460 - addr_offset, h_MsBtlPlayerSaveNumCheck);
+
+        // for enabling name/desc string reading
+        _TOGetSaveJobName_handle = new FhMethodHandle<TOGetSaveJobName>(this, "FFX-2.exe", 0x794600 - addr_offset, h_TOGetSaveJobName);
+        _MsGetSaveJob_handle = new FhMethodHandle<MsGetSaveJob>(this, "FFX-2.exe", 0x60c950 - addr_offset, h_MsGetSaveJob);
+        //help string - stop crashes with C# defined Jobs
+        _FUN_5E59B0_handle = new FhMethodHandle<FUN_5E59B0>(this, "FFX-2.exe", 0x5e59b0 - addr_offset, h_FUN_5E59B0);
+        _TOMenuSetHelpMes_handle = new FhMethodHandle<TOMenuSetHelpMes>(this, "FFX-2.exe", 0x763970 - addr_offset, h_TOMenuSetHelpMes);
+
+        //AltChr handles
+        _MsGetChrID_handle = new FhMethodHandle<MsGetChrID>(this, "FFX-2.exe", 0x624f90 - addr_offset, h_MsGetChrID);
+        _MsSetRamMotionChrData_handle = new FhMethodHandle<MsSetRamMotionChrData>(this, "FFX-2.exe", 0x627a20 - addr_offset, h_MsSetRamMotionChrData);
+        _beta_fx_handle = new FhMethodHandle<beta_fx>(this, "FFX-2.exe", 0x62ab30 - addr_offset, h_beta_fx);
+        _charlie_fx_handle = new FhMethodHandle<charlie_fx>(this, "FFX-2.exe", 0x534a70 - addr_offset, h_charlie_fx);
+        _MsGetChr_handle = new FhMethodHandle<MsGetChr>(this, "FFX-2.exe", 0x611450 - addr_offset, h_MsGetChr);
+
+        //for reading/writing character names
+        _MsGetSaveChrName_handle = new FhMethodHandle<MsGetSaveChrName>(this, "FFX-2.exe", 0x60c4a0 - addr_offset, h_MsGetSaveChrName);
+
+        //write Excel bin pointers
+        _FUN_6083B0_handle =  new FhMethodHandle<FUN_6083B0>(this, "FFX-2.exe", 0x6083b0 - addr_offset, h_FUN_6083B0);
+
+        // malloc for C# defined jobs and initialisation
+        rikku_freelancer_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
+        rikku_leblancgoon_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
+        paine_freelancer_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
+        paine_leblancgoon_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
+        InitNewJobs();
+
     }
 
+
+    public int h_MsGetChr(uint chr_id) {
+        return _MsGetChr_handle.orig_fptr.Invoke(chr_id);
+    }
+
+    public uint h_MsGetSaveJob(uint chr_id) {
+        return _MsGetSaveJob_handle.orig_fptr.Invoke(chr_id);
+    }
+
+    public int h_MsBtlPlayerSaveNumCheck(byte p1)
+    {
+        return _MsBtlPlayerSaveNumCheck_handle.orig_fptr.Invoke(p1);
+    }
+
+    public ushort h_MsGetJobNumBasic(uint p1)
+    {
+        return _MsGetJobNumBasic_handle.orig_fptr.Invoke(p1);
+    }
+
+    public ushort h_MsGetSaveAp(uint p1, uint p2)
+    {
+        return _MsGetSaveAp_handle.orig_fptr.Invoke(p1, p2);
+    }
+
+    public ushort h_MsGetSaveNeedAp(byte p1, uint p2)
+    {
+        return _MsGetSaveNeedAp_handle.orig_fptr.Invoke(p1, p2);
+    }
+
+    public uint h_MsGetSaveCommand(uint p1, uint p2) {
+        return _MsGetSaveCommand_handle.orig_fptr.Invoke(p1, p2);
+    }
+
+    public byte h_MsCheckLearnCommand(byte p1, int p2) {
+        return _MsCheckLearnCommand_handle.orig_fptr.Invoke(p1, p2);
+    }
+
+    public uint h_FUN_6294f0(uint p1, int p2, int p3) {
+        return _FUN_6294f0_handle.orig_fptr.Invoke(p1, p2, p3);
+    }
+
+    public uint h_MsCheckAbility(uint p1, int p2, int p3) {
+        return _MsCheckAbility_handle.orig_fptr.Invoke(p1, p2, p3);
+    }
+
+    public uint h_MsBtlMonsterSaveNumCheck(uint param_1) {
+        return _MsBtlMonsterSaveNumCheck_handle.orig_fptr.Invoke(param_1);
+    }
+
+    public unsafe int h_MsGetRomAbility(uint id, byte* out_data_end) {
+        return _MsGetRomAbility_handle.orig_fptr.Invoke(id, out_data_end);
+    }
+
+    public unsafe  int h_MsGetComData(uint id, byte* out_data_end) {
+        return _MsGetComData_handle.orig_fptr.Invoke(id, out_data_end);
+    }
+
+    public int h_MsCalcChrLevel(byte p1) {
+        return _MsCalcChrLevel_handle.orig_fptr.Invoke(p1);
+    }
+
+    public uint h_MsGetChrNum(uint param_1) {
+        return _MsGetChrNum_handle.orig_fptr.Invoke(param_1);
+    }
+
+    public unsafe byte* h_MsGetSaveChrName(int chr_id) {
+        return _MsGetSaveChrName_handle.orig_fptr.Invoke(chr_id);
+    }
+
+    // reimplementation so job name string is read correctly from job.bin for C# defined jobs
+    // Returns a memory address at which a null-terminated string is located.
+    public unsafe uint h_TOGetSaveJobName(uint chr_id) {
+
+        uint job_id;
+
+        int job_bin_base = FhUtil.get_at<int>(0x9f9188); // memory address of job.bin
+        int string_start = *(int*)(job_bin_base + 0x18); // read from excel header
+        int string_table_base = job_bin_base + 0x20 + string_start; //base, skip header, jump to start of string table
+
+
+        job_id = h_MsGetSaveJob(chr_id);
+        byte* local_8 = null;
+        ushort name_string_pointer = *(ushort*)(h_MsGetRomJob(chr_id, job_id, local_8));
+
+        //custom name handling
+        HandleCustomCharacterName(chr_id, job_id);
+
+        return (uint)(string_table_base + name_string_pointer); // memory address, start of null terminated byte string
+
+    }
+
+    // reimplementation so job help string is read correctly from job.bin for C# defined jobs
+    // runs TOMenuSetHelpMes which takes a memory address of a null terminated byte string as a parameter.
+    public unsafe void h_FUN_5E59B0(uint job_id) {
+        if (0x5020 <= job_id) {
+
+            int job_bin_base = FhUtil.get_at<int>(0x9f9188); // memory address of job.bin
+            int string_start = *(int*)(job_bin_base + 0x18); // read from excel header
+            int string_table_base = job_bin_base + 0x20 + string_start; //base, skip header, jump to start of string table
+
+            int chr_id = FhUtil.get_at<int>(0x9f6d80);
+            byte* out_data_end = null;
+
+            Job considered_job = *(Job*)h_MsGetRomJob((uint)chr_id, job_id, out_data_end);
+
+            ushort help_string_offset = considered_job.help_offset.text_offset;
+            ushort cre_help_string_offset = considered_job.creature_data.help_text.text_offset;
+
+            //ushort help_string_offset = *(ushort*)(h_MsGetRomJob((uint)chr_id, job_id, out_data_end) + 0x4); // use this to get help string offset
+            //ushort cre_help_string_offset = *(ushort*)(h_MsGetRomJob((uint)chr_id, job_id, out_data_end) + 0xAC);
+
+            // cre help
+            if (chr_id > 2) {
+                h_TOMenuSetHelpMes(string_table_base + cre_help_string_offset);
+            }
+            h_TOMenuSetHelpMes(string_table_base + help_string_offset);
+        }
+        else {
+            _FUN_5E59B0_handle.orig_fptr.Invoke(job_id);
+        }
+    }
+
+    public void h_TOMenuSetHelpMes(int addr_of_txt_bytes) {
+        _TOMenuSetHelpMes_handle.orig_fptr.Invoke(addr_of_txt_bytes);
+    }
+
+    // handle FL/LG getting ability to be learned
     public unsafe ushort h_MsGetSaveLearn(uint param_1, uint param_2)
     {
 
-        uint uVar1;
-        int iVar2;
+        uint chr_num;
+        int is_plyChr;
 
-        uVar1 = _MsGetChrNum(param_1);
-        iVar2 = _MsBtlPlayerSaveNumCheck((byte)uVar1);
-        if (iVar2 != 0)
+        chr_num = h_MsGetChrNum(param_1);
+        is_plyChr = h_MsBtlPlayerSaveNumCheck((byte)chr_num);
+        if (is_plyChr != 0)
         {
-            iVar2 = _MsGetJobNumBasic(param_2);
-            if (iVar2 < 0x1e)
+            int job_num = h_MsGetJobNumBasic(param_2);
+            if (job_num < 0x1e) // Vanilla
             {
                 ushort* DAT_00e05de0 = FhUtil.ptr_at<ushort>(0xa05de0);
 
-                return *(ushort*)((int)(DAT_00e05de0) + (iVar2 + uVar1 * 0x1e) * 2);
+                return *(ushort*)((int)(DAT_00e05de0) + (job_num + chr_num * 0x1e) * 2);
             }
-            else
+            else // FL/LG
             {
-                if (iVar2 == 0x20)
+                if (job_num == 0x20)
                 {
                     return freelancer_ability_learning;
                 }
 
-                if (iVar2 == 0x21)
+                if (job_num == 0x21)
                 {
                     return leblancgoon_ability_learning;
                 }
@@ -133,35 +312,35 @@ public partial class X2DSUnlimitModule : FhModule {
         return 0;
     }
        
-
+    // handle FL/LG setting ability to be learned
     public unsafe int h_MsSetSaveLearn(uint chr_id, uint job_id, ushort ability_id)
     {
-        uint uVar1;
-        int iVar2;
+        uint chr_num;
+        int is_plyChr;
 
 
-        uVar1 = _MsGetChrNum(chr_id);
-        iVar2 = _MsBtlPlayerSaveNumCheck((byte)uVar1);
-        if (iVar2 != 0)
+        chr_num = h_MsGetChrNum(chr_id);
+        is_plyChr = h_MsBtlPlayerSaveNumCheck((byte)chr_num);
+        if (is_plyChr != 0)
         {
-            iVar2 = _MsGetJobNumBasic(job_id);
-            if (iVar2 < 0x1e)
+            int job_num = h_MsGetJobNumBasic(job_id);
+            if (job_num< 0x1e) // vanilla
             {
                 ushort* DAT_00e05de0 = FhUtil.ptr_at<ushort>(0xa05de0);
 
-                *(ushort*)((int)(DAT_00e05de0) + (iVar2 + uVar1 * 0x1e) * 2) = ability_id;
+                *(ushort*)((int)(DAT_00e05de0) + (job_num + chr_num * 0x1e) * 2) = ability_id;
                 //return 0xffffffff;
                 return -1;
             }
-            else
+            else // FL/LG
             {
-                if (iVar2 == 0x20)
+                if (job_num == 0x20)
                 {
                     freelancer_ability_learning = ability_id;
                     return -1;
                 }
 
-                if (iVar2 == 0x21)
+                if (job_num == 0x21)
                 {
                     leblancgoon_ability_learning = ability_id;
                     return -1;
@@ -171,18 +350,48 @@ public partial class X2DSUnlimitModule : FhModule {
         return 0;
     }
 
+
+    // util
     public int h_MsCheckRange(int number, int lower_bound, int upper_bound)
     {
         return _MsCheckRange_handle.orig_fptr.Invoke(number, lower_bound, upper_bound);
     }
 
-    public unsafe int h_MsGetRomJob(uint param_1, uint param_2, byte* out_data_end)
+    /* job id is 0x50xx form
+     * returns the address where a X-2 Job is located.
+     * TOGetSaveJobName also uses this to get the Jobs string table pointer
+     * 
+     * Adds extra Job data for Rikku/Paine to allow for different stats/abilities
+     * 
+     */
+    public unsafe Job* h_MsGetRomJob(uint chr_id, uint job_id, byte* out_data_end)
     {
-        return _MsGetRomJob_handle.orig_fptr.Invoke(param_1, param_2, out_data_end);
+        
+        
+        if(job_id == 0x5020) {
+            if (chr_id == 1) {
+                return rikku_freelancer_ptr;
+            }
+            if (chr_id == 2) {
+                return paine_freelancer_ptr;
+            }
+        }
+
+        if (job_id == 0x5021) {
+            if (chr_id == 1) {
+                return rikku_leblancgoon_ptr;
+            }
+            if (chr_id == 2) {
+                return paine_leblancgoon_ptr;
+            }
+        }
+
+        //if not Freelance/Leblanc Goon
+        return _MsGetRomJob_handle.orig_fptr.Invoke(chr_id, job_id, out_data_end);
     }
 
 
-    // param_1 and 2 tell where it is drawn (special game co-ord system - not based on resolution)
+    // param_1 and 2 tell where GG DS icon is drawn (special game co-ord system - not based on resolution)
     // fix LG/FL showing blank icon on Garment Grid
     public void h_FUN_5E7580(int grid_x, int grid_y, int icon, uint param_4)
     {
@@ -316,7 +525,9 @@ public partial class X2DSUnlimitModule : FhModule {
 
 
     public override bool init(FhModContext mod_context, FileStream global_state_file) {
-        return _MsGetRomJob_handle.hook()
+
+        return _FUN_6083B0_handle.hook()
+            && _MsGetRomJob_handle.hook()
             && _MsAddSaveDreSphere_handle.hook()
             && _MsCheckRange_handle.hook()
             && _MsGetSaveDreSphere_handle.hook()
@@ -328,6 +539,7 @@ public partial class X2DSUnlimitModule : FhModule {
             && _kyGetJobNum_handle.hook()
             && _kyGetJobNum3_handle.hook()
             && _TOMenuMakeJobList_handle.hook()
+            && _memset_handle.hook()
             && _F791610_handle.hook()
             && _MsGetSavePlate_handle.hook()
             && _kyGetUsedPoint_handle.hook()
@@ -336,7 +548,35 @@ public partial class X2DSUnlimitModule : FhModule {
             && _TOMenuMakeJobAbilityList_handle.hook()
             && _TOMenuStartJobAbilityWindow_handle.hook()
             && _MsGetSaveLearn_handle.hook()
-            && _MsSetSaveLearn_handle.hook();
+            && _MsSetSaveLearn_handle.hook()
+
+
+            && _MsGetChrNum_handle.hook()
+            && _MsCalcChrLevel_handle.hook()
+            && _MsGetComData_handle.hook()
+            && _MsGetRomAbility_handle.hook()
+            && _MsBtlMonsterSaveNumCheck_handle.hook()
+            && _MsCheckAbility_handle.hook()
+            && _FUN_6294f0_handle.hook()
+            && _MsCheckLearnCommand_handle.hook()
+            && _MsGetSaveCommand_handle.hook()
+            && _MsGetSaveAp_handle.hook()
+            && _MsGetSaveNeedAp_handle.hook()
+            && _MsGetJobNumBasic_handle.hook()
+            && _MsBtlPlayerSaveNumCheck_handle.hook()
+
+            && _TOGetSaveJobName_handle.hook()
+            && _MsGetSaveJob_handle.hook()
+            && _FUN_5E59B0_handle.hook()
+            && _TOMenuSetHelpMes_handle.hook()
+
+            && _MsGetChrID_handle.hook()
+            && _MsSetRamMotionChrData_handle.hook()
+            && _MsGetChr_handle.hook()
+            && _beta_fx_handle.hook()
+            && _charlie_fx_handle.hook()
+            && _MsGetSaveChrName_handle.hook();
+            
             //&& _FUN_778160_handle.hook();
     }
 

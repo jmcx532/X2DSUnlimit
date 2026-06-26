@@ -56,19 +56,19 @@ public partial class X2DSUnlimitModule : FhModule
         int string_table_start = 0;
         int command_bin_start = FhUtil.get_at<int>(0x9f9164);
         int a_ability_bin_start = FhUtil.get_at<int>(0x9f9174);
-        int ability_base_addr = _MsGetComData(0x302c, null);
+        int ability_base_addr = h_MsGetComData(0x302c, null);
 
         if (ability_id >> 0xc == 3)
         {
             byte* p = stackalloc byte[40];
             string_table_start = command_bin_start + 0x12f18;
-            ability_base_addr = _MsGetComData(ability_id, p);
+            ability_base_addr = h_MsGetComData(ability_id, p);
         }
         if (ability_id >> 0xc == 8)
         {
             byte* p = stackalloc byte[40];
             string_table_start = a_ability_bin_start + 0x6f80;
-            ability_base_addr = _MsGetRomAbility(ability_id, p);
+            ability_base_addr = h_MsGetRomAbility(ability_id, p);
         }
 
         

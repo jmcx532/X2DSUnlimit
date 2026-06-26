@@ -1,4 +1,6 @@
-﻿namespace Fahrenheit.Mods.X2DSUnlimit;
+﻿using Fahrenheit.FFX2;
+
+namespace Fahrenheit.Mods.X2DSUnlimit;
 
 public partial class X2DSUnlimitModule : FhModule
 {
@@ -91,7 +93,8 @@ public partial class X2DSUnlimitModule : FhModule
     // thunk at 87dd24
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate void* memset(void* _Dst, int _Val, uint _Size);
-    private memset _memset = FhUtil.get_fptr<memset>(0x47dd24);
+    //private memset _memset = FhUtil.get_fptr<memset>(0x47dd24);
+    private readonly FhMethodHandle<memset> _memset_handle; //87dd24
 
     /*
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -119,57 +122,58 @@ public partial class X2DSUnlimitModule : FhModule
     //sub-function delegates
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint MsGetChrNum(uint param_1); //60c1a0
-    private MsGetChrNum _MsGetChrNum = FhUtil.get_fptr<MsGetChrNum>(0x20c1a0);
+    private readonly FhMethodHandle<MsGetChrNum> _MsGetChrNum_handle;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int MsCalcChrLevel(byte p1);//617140
-    private MsCalcChrLevel _MsCalcChrLevel = FhUtil.get_fptr<MsCalcChrLevel>(0x217140);
+    private readonly FhMethodHandle<MsCalcChrLevel> _MsCalcChrLevel_handle;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public unsafe delegate int MsGetRomJob(uint p1, uint p2_jobid_0x5001, byte* out_data_end);//61deb0
-    //private MsGetRomJob _MsGetRomJob = FhUtil.get_fptr<MsGetRomJob>(0x21deb0);
+    public unsafe delegate Job* MsGetRomJob(uint chr_id, uint job_id, byte* out_data_end);//61deb0
     private readonly FhMethodHandle<MsGetRomJob> _MsGetRomJob_handle;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate int MsGetComData(uint id, byte* out_data_end);//625160
-    private readonly MsGetComData _MsGetComData = FhUtil.get_fptr<MsGetComData>(0x225160);
+    private readonly FhMethodHandle<MsGetComData> _MsGetComData_handle;//625160
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate int MsGetRomAbility(uint id, byte* out_data_end);//61de50
-    private readonly MsGetRomAbility _MsGetRomAbility = FhUtil.get_fptr<MsGetRomAbility>(0x21de50);
+    private readonly FhMethodHandle<MsGetRomAbility> _MsGetRomAbility_handle;//61de50
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint MsBtlMonsterSaveNumCheck(uint p1); //610440
-    private MsBtlMonsterSaveNumCheck _MsBtlMonsterSaveNumCheck = FhUtil.get_fptr<MsBtlMonsterSaveNumCheck>(0x210440);
+    private readonly FhMethodHandle<MsBtlMonsterSaveNumCheck> _MsBtlMonsterSaveNumCheck_handle;//610440
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate uint MsCheckAbility(uint p1, int p2, int p3); // 629280
-    private MsCheckAbility _MsCheckAbility = FhUtil.get_fptr<MsCheckAbility>(0x229280);
+    public delegate uint MsCheckAbility(uint p1, int p2, int p3); //629280
+    private readonly FhMethodHandle<MsCheckAbility> _MsCheckAbility_handle;//629280
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint FUN_6294f0(uint p1, int p2, int p3); //6294f0
-    private FUN_6294f0 _FUN_6294f0 = FhUtil.get_fptr<FUN_6294f0>(0x2294f0);
+    private readonly FhMethodHandle<FUN_6294f0> _FUN_6294f0_handle;//6294f0
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate byte MsCheckLearnCommand(byte p1, int p2); // 635790
-    private MsCheckLearnCommand _MsCheckLearnCommand = FhUtil.get_fptr<MsCheckLearnCommand>(0x235790);
+    public delegate byte MsCheckLearnCommand(byte p1, int p2); //635790
+    private readonly FhMethodHandle<MsCheckLearnCommand> _MsCheckLearnCommand_handle;//635790
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate uint MsGetSaveCommand(uint p1, uint p2); // 60c500
-    private MsGetSaveCommand _MsGetSaveCommand = FhUtil.get_fptr<MsGetSaveCommand>(0x20c500);
+    public delegate uint MsGetSaveCommand(uint p1, uint p2); //60c500
+    private readonly FhMethodHandle<MsGetSaveCommand> _MsGetSaveCommand_handle;//60c500
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void FUN_778160(int param_1, int param_2, int param_3, int param_4);
-    private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;// 778160
+    private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;//778160
 
 
     //sub-function delegates
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate ushort MsGetSaveAp(uint p1, uint p2);//60c2e0
-    private MsGetSaveAp _MsGetSaveAp = FhUtil.get_fptr<MsGetSaveAp>(0x20c2e0);
+    //private MsGetSaveAp _MsGetSaveAp = FhUtil.get_fptr<MsGetSaveAp>(0x20c2e0);
+    private readonly FhMethodHandle<MsGetSaveAp> _MsGetSaveAp_handle;
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate ushort MsGetSaveNeedAp(byte p1, uint p2);//60cb20
-    private MsGetSaveNeedAp _MsGetSaveNeedAp = FhUtil.get_fptr<MsGetSaveNeedAp>(0x20cb20);
+    private readonly FhMethodHandle<MsGetSaveNeedAp> _MsGetSaveNeedAp_handle;
 
     // also used in custom ability menus
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -183,20 +187,69 @@ public partial class X2DSUnlimitModule : FhModule
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate ushort MsGetJobNumBasic(uint param_1);//61de30
-    private MsGetJobNumBasic _MsGetJobNumBasic = FhUtil.get_fptr<MsGetJobNumBasic>(0x21de30);
+    //private MsGetJobNumBasic _MsGetJobNumBasic = FhUtil.get_fptr<MsGetJobNumBasic>(0x21de30);
+    private readonly FhMethodHandle<MsGetJobNumBasic> _MsGetJobNumBasic_handle;
+
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int MsBtlPlayerSaveNumCheck(byte param_1);//610460
-    private MsBtlPlayerSaveNumCheck _MsBtlPlayerSaveNumCheck = FhUtil.get_fptr<MsBtlPlayerSaveNumCheck>(0x210460);
+    //private MsBtlPlayerSaveNumCheck _MsBtlPlayerSaveNumCheck = FhUtil.get_fptr<MsBtlPlayerSaveNumCheck>(0x210460);
+    private readonly FhMethodHandle<MsBtlPlayerSaveNumCheck> _MsBtlPlayerSaveNumCheck_handle;
 
     //Main Delegate 3
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void TOMenuStartJobAbilityWindow(uint param_1, uint param_2);
     private readonly FhMethodHandle<TOMenuStartJobAbilityWindow> _TOMenuStartJobAbilityWindow_handle;//778f70
 
-    
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint TOGetSaveJobName(uint param_1);
+    private readonly FhMethodHandle<TOGetSaveJobName> _TOGetSaveJobName_handle;//794600
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint MsGetSaveJob(uint chr_id);
+    private readonly FhMethodHandle< MsGetSaveJob> _MsGetSaveJob_handle;//60c950
 
 
+    // AltChr delegates
+    //main function
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint MsGetChrID(uint chr_id);
+    private readonly FhMethodHandle<MsGetChrID> _MsGetChrID_handle;//624f90
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void MsSetRamMotionChrData(int chr_id, uint job_id);//627a20
+    private readonly FhMethodHandle<MsSetRamMotionChrData> _MsSetRamMotionChrData_handle;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    //62ab30 -  FUN_710026cc90? - btlSoundStreamNormal? -- using this to force alts's hurt SFX to play
+    public unsafe delegate uint beta_fx(uint chr_id, uint sound_id);
+    private readonly FhMethodHandle<beta_fx> _beta_fx_handle;
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    //534a70 - this function accessed the VoiceIDMapper.txt integer/string pointer for Yuna's hurt sound. Might use this to silence it?
+    public unsafe delegate void charlie_fx(int* param_1, int param_2, int param_3, int param_4,/*FMODCHANNELINDEX*/ int param_5, int param_6, int* param_7, int* param_8, int* param_9);
+    private readonly FhMethodHandle<charlie_fx> _charlie_fx_handle;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MsGetChr(uint chr_id);
+    private readonly FhMethodHandle<MsGetChr> _MsGetChr_handle;//611450
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate byte* MsGetSaveChrName(int chr_id);
+    private readonly FhMethodHandle<MsGetSaveChrName> _MsGetSaveChrName_handle;//60c4a0
+
+    // C# defined job help string crash prevention
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_5E59B0(uint job_id);
+    private readonly FhMethodHandle<FUN_5E59B0> _FUN_5E59B0_handle;//5E59B0
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMenuSetHelpMes(int addr_of_txt_bytes);
+    private readonly FhMethodHandle<TOMenuSetHelpMes> _TOMenuSetHelpMes_handle;// 763970
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int FUN_6083B0(uint param_1);
+    private readonly FhMethodHandle<FUN_6083B0> _FUN_6083B0_handle;// 6083B0
 
     /*
     // Main Delegate 4

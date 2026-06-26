@@ -55,6 +55,11 @@ public partial class X2DSUnlimitModule : FhModule {
 
     }
 
+    public unsafe void* h_memset(void* _Dst, int _Val, uint _Size)
+    {
+        return _memset_handle.orig_fptr.Invoke(_Dst, _Val, _Size);
+    }
+
     //adds Freelancer/Leblanc Goon to abilities menu job list
     public unsafe void h_TOMenuMakeJobList(int chr_id)
     {
@@ -75,7 +80,7 @@ public partial class X2DSUnlimitModule : FhModule {
             puVar3[0] = 0;
             puVar3[1] = 0;
 
-            _memset(puVar3 + 2, 0, 0x100);
+            h_memset(puVar3 + 2, 0, 0x100);
 
             puVar3 += 0x44;
         }
@@ -274,7 +279,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
         byte* local_1c = stackalloc byte[64];
 
-        iVar2 = h_MsGetRomJob(chr_id, job_id, local_1c);
+        iVar2 = (int)h_MsGetRomJob(chr_id, job_id, local_1c);
         uVar1 = local_8;
         local_14 = (ushort*)(iVar2 + 0x3e); // start of job.bin dressphere abilities
 
@@ -291,9 +296,9 @@ public partial class X2DSUnlimitModule : FhModule {
             *(byte*)(iVar2 + -3) = 0;
             *(ushort*)(iVar2 + -1) = 0; // zeroes is_selected bool
             *(uint*)(iVar2 + 1) = uVar7;
-            uVar3 = _MsGetSaveAp(uVar1, uVar7);
+            uVar3 = h_MsGetSaveAp(uVar1, uVar7);
             *(uint*)(iVar2 + 5) = uVar3;
-            iVar4 = _MsGetSaveNeedAp((byte)uVar1, uVar7);
+            iVar4 = h_MsGetSaveNeedAp((byte)uVar1, uVar7);
             uVar3 = local_8;
             *(int*)(iVar2 + 9) = iVar4;
             if (iVar4 < *(int*)(iVar2 + 5))
@@ -447,15 +452,15 @@ public partial class X2DSUnlimitModule : FhModule {
         nint DAT_00df9258_addr = (nint)(DAT_00df9258);
 
         iVar13 = 0;
-        uVar3 = _MsGetChrNum((uint)param_1);
-        uVar4 = (uint)_MsCalcChrLevel((byte)uVar3);
+        uVar3 = h_MsGetChrNum((uint)param_1);
+        uVar4 = (uint)h_MsCalcChrLevel((byte)uVar3);
 
         //iVar5 = _MsGetRomJob(uVar3, (uint)param_2, 0);
         iVar5 = (int)h_MsGetRomJob(uVar3, (uint)param_2, null);
         if (iVar5 != 0)
         {
 
-            iVar6 = (int)_MsBtlMonsterSaveNumCheck(uVar3);
+            iVar6 = (int)h_MsBtlMonsterSaveNumCheck(uVar3);
             if (iVar6 == 0)
             {
                 iVar7 = 0x10;
@@ -476,10 +481,10 @@ public partial class X2DSUnlimitModule : FhModule {
                     sVar2 = *(short*)(iVar5 + iVar14 * 4);
                     if (sVar1 != 0)
                     {
-                        iVar8 = (int)_MsCheckAbility(uVar3, sVar2, (int)uVar4);
-                        iVar9 = (int)_FUN_6294f0((uint)sVar1, (int)DAT_00df9258_addr, iVar13);/* Excel/MsGetRomAbility related */
-                        iVar10 = _MsCheckLearnCommand((byte)uVar3, sVar1);
-                        iVar11 = (int)_MsGetSaveCommand(uVar3, (uint)sVar1);
+                        iVar8 = (int)h_MsCheckAbility(uVar3, sVar2, (int)uVar4);
+                        iVar9 = (int)h_FUN_6294f0((uint)sVar1, (int)DAT_00df9258_addr, iVar13);/* Excel/MsGetRomAbility related */
+                        iVar10 = h_MsCheckLearnCommand((byte)uVar3, sVar1);
+                        iVar11 = (int)h_MsGetSaveCommand(uVar3, (uint)sVar1);
 
                         bool left_condition = iVar6 != 0 || param_4 == 0 || sVar2 == 0 || iVar11 !=0;
                         bool right_condition = (iVar8 != 0 && iVar9 != 0) && (iVar10 != 0 && (iVar13 < 10));
