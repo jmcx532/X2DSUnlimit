@@ -10,10 +10,10 @@ public partial class X2DSUnlimitModule : FhModule {
         int chr_model = *(int*)(chr_base_addr + 4);
 
         if (chr_id == 0) {
-            _logger.Info("Chr_id) is: " + chr_id);
-            _logger.Info("Sfx id / atk/hurt etc.) is: " + sound_id);
+            //_logger.Info("Chr_id) is: " + chr_id);
+            //_logger.Info("Sfx id / atk/hurt etc.) is: " + sound_id);
             //use for printing int* and other pointer types _logger.Info($" 62ae40 param_2 is: 0x{(ulong)param_2:X}");
-            _logger.Info("Return result is: " + original_result);
+            //_logger.Info("Return result is: " + original_result);
         }
 
         //if player character model has been replaced with Kimahri and requested sfx is 11 (is sfx_num,not a VL integer), play his hurt sound (Requires his bank 1313 to be loaded - by changing wep/w___.bin) (create w0019 and w0020.bin for Fl/LG, can copy and rename an existing one)
@@ -40,9 +40,10 @@ public partial class X2DSUnlimitModule : FhModule {
         int y_base_addr = h_MsGetChr(0);
         int r_base_addr = h_MsGetChr(1);
         int p_base_addr = h_MsGetChr(2);
-        bool y_in_new_ds = (*(short*)(y_base_addr + 0x86a) != 0x5020 && *(short*)(y_base_addr + 0x86a) != 0x5021);
-        bool r_in_new_ds = (*(short*)(r_base_addr + 0x86a) != 0x5020 && *(short*)(r_base_addr + 0x86a) != 0x5021);
-        bool p_in_new_ds = (*(short*)(p_base_addr + 0x86a) != 0x5020 && *(short*)(p_base_addr + 0x86a) != 0x5021);
+
+        bool y_in_vanilla_ds = (*(short*)(y_base_addr + 0x86a) != 0x501D && *(short*)(y_base_addr + 0x86a) != 0x5020 && *(short*)(y_base_addr + 0x86a) != 0x5021);
+        bool r_in_vanilla_ds = (*(short*)(r_base_addr + 0x86a) != 0x501E && *(short*)(r_base_addr + 0x86a) != 0x5020 && *(short*)(r_base_addr + 0x86a) != 0x5021);
+        bool p_in_vanilla_ds = (*(short*)(p_base_addr + 0x86a) != 0x501F && *(short*)(p_base_addr + 0x86a) != 0x5020 && *(short*)(p_base_addr + 0x86a) != 0x5021);
 
         //switch statement to stop battle_iop lines playing when character model has been swapped - hurt sound, attack hya
         switch (voice_integer) {
@@ -50,7 +51,7 @@ public partial class X2DSUnlimitModule : FhModule {
             //Yuna's IOP lines
             case < 11: //0A 00 00 00 is Yuna's last IOP voiceline integer
                 //if Yuna is in Freelancer/LeblancGoon, break, return early to mute her IOP Sounds
-                if (y_in_new_ds){
+                if (y_in_vanilla_ds){
                     break;
                 }
                 else {
@@ -58,7 +59,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
 
             case < 21:
-                if (r_in_new_ds) {
+                if (r_in_vanilla_ds) {
                     break;
                 }
                 else {
@@ -66,7 +67,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
 
             case < 32:
-                if (p_in_new_ds) {
+                if (p_in_vanilla_ds) {
                     break;
                 }
                 else {
@@ -74,7 +75,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
             case 0x21: 
             case 0x24:
-                    if (y_in_new_ds) {
+                    if (y_in_vanilla_ds) {
                     break;
                 }
                 else {
@@ -82,7 +83,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
             case 0x22:
             case 0x25:
-                if (r_in_new_ds) {
+                if (r_in_vanilla_ds) {
                     break;
                 }
                 else {
@@ -90,7 +91,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
             case 0x23:
             case 0x26:
-                if (r_in_new_ds) {
+                if (p_in_vanilla_ds) {
                     break;
                 }
                 else {

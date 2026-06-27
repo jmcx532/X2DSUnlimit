@@ -12,17 +12,18 @@ public partial class X2DSUnlimitModule : FhModule
 
 
     //used for rendering - fetch data to fill, and update underlying data, not these directly?
+    // FFX-2.exe + dbb200, dbb204
     // Populated by TOMenuMakeJobAbilityList
     [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x10)]
     public struct AbilityListDataAbility
     {
-        [FieldOffset(0x00)] public bool is_visible;
-        [FieldOffset(0x01)] public bool b2;
-        [FieldOffset(0x02)] public bool is_mastered;
-        [FieldOffset(0x03)] public bool is_selected;
-        [FieldOffset(0x04)] public uint ability_id;// e.g 0x302C or 0x8002, command/a_ability id
-        [FieldOffset(0x08)] public uint current_ap;
-        [FieldOffset(0x0C)] public uint ap_needed;
+        [FieldOffset(0x00)] public bool is_visible; // -3
+        [FieldOffset(0x01)] public bool b2; // -2
+        [FieldOffset(0x02)] public bool is_mastered; // -1
+        [FieldOffset(0x03)] public bool is_selected; // 0
+        [FieldOffset(0x04)] public uint ability_id;// e.g 0x302C or 0x8002, command/a_ability id // + 1
+        [FieldOffset(0x08)] public uint current_ap; // + 5
+        [FieldOffset(0x0C)] public uint ap_needed; // + 9
 
     }
 

@@ -1,10 +1,6 @@
-﻿using Fahrenheit.FFX.Ids;
-
-namespace Fahrenheit.Mods.X2DSUnlimit;
-
+﻿namespace Fahrenheit.Mods.X2DSUnlimit;
 
 public partial class X2DSUnlimitModule : FhModule {
-
 
     //624f90 - used to overwrite the character model to be loaded in battle
     public unsafe uint h_MsGetChrID(uint chr_id) {
@@ -17,14 +13,21 @@ public partial class X2DSUnlimitModule : FhModule {
         ushort* party_ds_record_base = FhUtil.ptr_at<ushort>(0xa016f6);
 
         switch (original_model) {
-            //Yuna Gunner model
+            //Yuna Gunner model / Festivalist
+            case 974:
             case 1:
                 ushort y_ds_record = *(ushort*)(party_ds_record_base);
+                // Festivalist replacement
+                if ((y_ds_record) == 0x501d) {
+                    *(int*)(chr_base_addr + 4) = 0x1139;
+                    *(int*)(chr_base_addr + 8) = 0x1139;
+                    WriteChrName(CharName.Kimahri, chr_id);
+                    return chr_id;
+                }
                 // Freelancer replacement
                 if ((y_ds_record) == 0x5020) {
                     *(int*)(chr_base_addr + 4) = 0x1139;
                     *(int*)(chr_base_addr + 8) = 0x1139;
-                    WriteChrName(CharName.Kimahri, chr_id);
                     return chr_id;
                 }
                 // Leblanc Goon Replacement
@@ -34,14 +37,21 @@ public partial class X2DSUnlimitModule : FhModule {
                     return chr_id;
                 }
                 return chr_id;
-            // Rikku Thief model
+            // Rikku Thief model / Festivalist
+            case 975:
             case 26:
                 ushort r_ds_record = *(ushort*)(party_ds_record_base + (1 * 0x40));
+                // Festivalist replacement
+                if ((r_ds_record) == 0x501E) {
+                    *(int*)(chr_base_addr + 4) = 0x113D;
+                    *(int*)(chr_base_addr + 8) = 0x113D;
+                    WriteChrName(CharName.Tidus, chr_id);
+                    return chr_id;
+                }
                 // Freelancer replacement
                 if (r_ds_record == 0x5020) {
                     *(int*)(chr_base_addr + 4) = 0x113D;
                     *(int*)(chr_base_addr + 8) = 0x113D;
-                    WriteChrName(CharName.Tidus, chr_id);
                     return chr_id;
                 }
                 // Leblanc Goon Replacement
@@ -51,14 +61,21 @@ public partial class X2DSUnlimitModule : FhModule {
                     return chr_id;
                 }
                 return chr_id;
-            // Paine Warrior model
+            // Paine Warrior model / Festivalist
+            case 976:
             case 51:
                 ushort p_ds_record = *(ushort*)(party_ds_record_base + (2 * 0x40));
+                // Festivalist replacement
+                if ((p_ds_record) == 0x501F) {
+                    *(int*)(chr_base_addr + 4) = 0x113F;
+                    *(int*)(chr_base_addr + 8) = 0x113F;
+                    WriteChrName(CharName.Seymour, chr_id);
+                    return chr_id;
+                }
                 // Freelancer replacement
                 if (p_ds_record == 0x5020) {
                     *(int*)(chr_base_addr + 4) = 0x113F;
                     *(int*)(chr_base_addr + 8) = 0x113F;
-                    WriteChrName(CharName.Seymour, chr_id);
                     return chr_id;
                 }
                 // Leblanc Goon Replacement
@@ -137,7 +154,10 @@ public partial class X2DSUnlimitModule : FhModule {
     private void HandleCustomCharacterName(uint chr_id, uint job_id) {
         switch (chr_id) {
             case 0:
-                if (job_id == 0x5020) {
+                if (job_id == 0x501d) {
+                    WriteChrName(CharName.Kimahri, 0);
+                }
+                else if (job_id == 0x5020) {
                     WriteChrName(CharName.Kimahri, 0);
                 }
                 else if (job_id == 0x5021) {
@@ -149,7 +169,10 @@ public partial class X2DSUnlimitModule : FhModule {
                 break;
 
             case 1:
-                if (job_id == 0x5020) {
+                if (job_id == 0x501E) {
+                    WriteChrName(CharName.Tidus, 1);
+                }
+                else if (job_id == 0x5020) {
                     WriteChrName(CharName.Tidus, 1);
                 }
                 else if (job_id == 0x5021) {
@@ -161,7 +184,10 @@ public partial class X2DSUnlimitModule : FhModule {
                 break;
 
             case 2:
-                if (job_id == 0x5020) {
+                if (job_id == 0x501F) {
+                    WriteChrName(CharName.Seymour, 2);
+                }
+                else if (job_id == 0x5020) {
                     WriteChrName(CharName.Seymour, 2);
                 }
                 else if (job_id == 0x5021) {
@@ -176,7 +202,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
 
     /// <summary>
-    /// Overwrite Freelancer/Leblanc Goon job.bin entries in memory instead of needing to EFL them.
+    /// Overwrite Festivalist/Freelancer/Leblanc Goon job.bin entries in memory instead of needing to EFL them.
     /// Still need EFL at present for custom strings.
     /// </summary>
     bool F6083B0_runOnce = false;
@@ -188,7 +214,10 @@ public partial class X2DSUnlimitModule : FhModule {
             F6083B0_runOnce = true;
             InitYunaFreelancer();
             InitYunaLeblancGoon();
-            _logger.Info("Overwrite job.bin Fl/LG for Yuna");
+            //_logger.Info("Overwrite job.bin Fl/LG for Yuna");
+            InitYunaFestivalist();
+            InitRikkuFestivalist();
+            InitPaineFestivalist();
         }
 
         return original_result;
@@ -200,6 +229,387 @@ public partial class X2DSUnlimitModule : FhModule {
         InitRikkuLeblancGoon();
         InitPaineFreelancer();
         InitPaineLeblancGoon();
+    }
+
+    public unsafe void InitYunaFestivalist() {
+
+        // read and get copy of Job struct
+        Job y_festivalist = *(Job*)h_MsGetRomJob(0, 0x501d, null);
+
+        y_festivalist.name_offset.text_offset = 2345;
+        y_festivalist.help_offset.text_offset = 2357;
+        y_festivalist.user = 0;
+        y_festivalist.dressphere_menu_ordering = 15;
+        y_festivalist.icon = 99;
+        y_festivalist.berserk_action = 0x302D;
+
+        // stat growth
+        y_festivalist.growth_hp.linear_mult = 38;
+        y_festivalist.growth_hp.quadratic_div = 133;
+        y_festivalist.growth_hp.base_amount = 78;
+
+        y_festivalist.growth_mp.linear_mult = 26;
+        y_festivalist.growth_mp.quadratic_div = 180;
+        y_festivalist.growth_mp.base_amount = 18;
+
+        y_festivalist.growth_strength.linear_mult = 20;
+        y_festivalist.growth_strength.linear_div = 10;
+        y_festivalist.growth_strength.base_amount = 15;
+        y_festivalist.growth_strength.quadratic_div_a = 12;
+        y_festivalist.growth_strength.quadratic_div_b = 1;
+
+        y_festivalist.growth_defense.linear_mult = 3;
+        y_festivalist.growth_defense.linear_div = 200;
+        y_festivalist.growth_defense.base_amount = 32;
+        y_festivalist.growth_defense.quadratic_div_a = 200;
+        y_festivalist.growth_defense.quadratic_div_b = 2;
+
+        y_festivalist.growth_magic.linear_mult = 6;
+        y_festivalist.growth_magic.linear_div = 4;
+        y_festivalist.growth_magic.base_amount = 18;
+        y_festivalist.growth_magic.quadratic_div_a = 200;
+        y_festivalist.growth_magic.quadratic_div_b = 2;
+
+        y_festivalist.growth_magic_defense.linear_mult = 3;
+        y_festivalist.growth_magic_defense.linear_div = 16;
+        y_festivalist.growth_magic_defense.base_amount = 38;
+        y_festivalist.growth_magic_defense.quadratic_div_a = 200;
+        y_festivalist.growth_magic_defense.quadratic_div_b = 2;
+
+        y_festivalist.growth_agility.linear_mult = 0;
+        y_festivalist.growth_agility.linear_div = 17;
+        y_festivalist.growth_agility.base_amount = 54;
+        y_festivalist.growth_agility.quadratic_div_a = 200;
+        y_festivalist.growth_agility.quadratic_div_b = 4;
+
+        y_festivalist.growth_evasion.linear_mult = 0;
+        y_festivalist.growth_evasion.linear_div = 20;
+        y_festivalist.growth_evasion.base_amount = 10;
+        y_festivalist.growth_evasion.quadratic_div_a = 200;
+        y_festivalist.growth_evasion.quadratic_div_b = 4;
+
+        y_festivalist.growth_accuracy.linear_mult = 0;
+        y_festivalist.growth_accuracy.linear_div = 17;
+        y_festivalist.growth_accuracy.base_amount = 120;
+        y_festivalist.growth_accuracy.quadratic_div_a = 200;
+        y_festivalist.growth_accuracy.quadratic_div_b = 4;
+
+        y_festivalist.growth_luck.linear_mult = 0;
+        y_festivalist.growth_luck.linear_div = 22;
+        y_festivalist.growth_luck.base_amount = 13;
+        y_festivalist.growth_luck.quadratic_div_a = 200;
+        y_festivalist.growth_luck.quadratic_div_b = 4;
+
+
+        //weapon and armor
+        y_festivalist.yuna_weapon_data[0].weapon_model = 4410;
+        y_festivalist.yuna_weapon_data[0].weapon_position = 14;
+        y_festivalist.yuna_weapon_data[1].weapon_model = 0;
+        y_festivalist.yuna_weapon_data[1].weapon_position = 0;
+        y_festivalist.yuna_weapon_data[2].weapon_model = 0;
+        y_festivalist.yuna_weapon_data[2].weapon_position = 0;
+        y_festivalist.yuna_weapon_data[3].weapon_model = 0;
+        y_festivalist.yuna_weapon_data[3].weapon_position = 0;
+
+
+        // abilities
+        y_festivalist.dressphere_abilities[0].requirement = 0;
+        y_festivalist.dressphere_abilities[0].ability = 0x302D; // Attack
+
+        y_festivalist.dressphere_abilities[1].requirement = 1;
+        y_festivalist.dressphere_abilities[1].ability = 0x31FA; // Matra Magic
+        
+        y_festivalist.dressphere_abilities[2].requirement = 0;
+        y_festivalist.dressphere_abilities[2].ability = 0x31F4; // Jump
+        
+        y_festivalist.dressphere_abilities[3].requirement = 0x31F4;
+        y_festivalist.dressphere_abilities[3].ability = 0x3200; // High Jump
+        
+        y_festivalist.dressphere_abilities[4].requirement = 0x31FA;
+        y_festivalist.dressphere_abilities[4].ability = 0x31F7; // Electro Burst
+        
+        y_festivalist.dressphere_abilities[5].requirement = 0x31F7;
+        y_festivalist.dressphere_abilities[5].ability = 0x31FD; // Aqualung
+        
+        y_festivalist.dressphere_abilities[6].requirement = 0x31FD;
+        y_festivalist.dressphere_abilities[6].ability = 0x3201; // Avalanche
+        
+        y_festivalist.dressphere_abilities[7].requirement = 1;
+        y_festivalist.dressphere_abilities[7].ability = 0x3202; // Enrage
+        
+        y_festivalist.dressphere_abilities[8].requirement = 0;
+        y_festivalist.dressphere_abilities[8].ability = 0x3203; // Lancet
+        
+        y_festivalist.dressphere_abilities[9].requirement = 0x3202;
+        y_festivalist.dressphere_abilities[9].ability = 0x3204; // Nova Strike
+        
+        y_festivalist.dressphere_abilities[10].requirement = 0x3204; 
+        y_festivalist.dressphere_abilities[10].ability = 0x3205; //  Supernova
+        
+        y_festivalist.dressphere_abilities[11].requirement = 1;
+        y_festivalist.dressphere_abilities[11].ability = 0x3212; // White Wind
+        
+        y_festivalist.dressphere_abilities[12].requirement = 0x3212;
+        y_festivalist.dressphere_abilities[12].ability = 0x3213; // Mighty Guard
+        
+        y_festivalist.dressphere_abilities[13].requirement = 1;
+        y_festivalist.dressphere_abilities[13].ability = 0x805C; // Pointlessproof
+        
+        y_festivalist.dressphere_abilities[14].requirement = 0x805c;
+        y_festivalist.dressphere_abilities[14].ability = 0x801A; // Sage Lv.2
+        
+        y_festivalist.dressphere_abilities[15].requirement = 0x801A;
+        y_festivalist.dressphere_abilities[15].ability = 0x801B; // Sage Lv.3
+
+        // Write the changes to memory
+        *(Job*)h_MsGetRomJob(0, 0x501d, null) = y_festivalist;
+    }
+
+
+    public unsafe void InitRikkuFestivalist() {
+        // read and get copy of Job struct
+        Job r_festivalist = *(Job*)h_MsGetRomJob(1, 0x501E, null);
+
+        r_festivalist.name_offset.text_offset = 2345;
+        r_festivalist.help_offset.text_offset = 2357;
+        r_festivalist.user = 1;
+        r_festivalist.dressphere_menu_ordering = 15;
+        r_festivalist.icon = 99;
+        r_festivalist.berserk_action = 0x302D;
+
+        // stat growth
+        r_festivalist.growth_hp.linear_mult = 38;
+        r_festivalist.growth_hp.quadratic_div = 133;
+        r_festivalist.growth_hp.base_amount = 78;
+
+        r_festivalist.growth_mp.linear_mult = 26;
+        r_festivalist.growth_mp.quadratic_div = 180;
+        r_festivalist.growth_mp.base_amount = 18;
+
+        r_festivalist.growth_strength.linear_mult = 20;
+        r_festivalist.growth_strength.linear_div = 10;
+        r_festivalist.growth_strength.base_amount = 15;
+        r_festivalist.growth_strength.quadratic_div_a = 12;
+        r_festivalist.growth_strength.quadratic_div_b = 1;
+
+        r_festivalist.growth_defense.linear_mult = 3;
+        r_festivalist.growth_defense.linear_div = 200;
+        r_festivalist.growth_defense.base_amount = 32;
+        r_festivalist.growth_defense.quadratic_div_a = 200;
+        r_festivalist.growth_defense.quadratic_div_b = 2;
+
+        r_festivalist.growth_magic.linear_mult = 6;
+        r_festivalist.growth_magic.linear_div = 4;
+        r_festivalist.growth_magic.base_amount = 18;
+        r_festivalist.growth_magic.quadratic_div_a = 200;
+        r_festivalist.growth_magic.quadratic_div_b = 2;
+
+        r_festivalist.growth_magic_defense.linear_mult = 3;
+        r_festivalist.growth_magic_defense.linear_div = 16;
+        r_festivalist.growth_magic_defense.base_amount = 38;
+        r_festivalist.growth_magic_defense.quadratic_div_a = 200;
+        r_festivalist.growth_magic_defense.quadratic_div_b = 2;
+
+        r_festivalist.growth_agility.linear_mult = 0;
+        r_festivalist.growth_agility.linear_div = 17;
+        r_festivalist.growth_agility.base_amount = 54;
+        r_festivalist.growth_agility.quadratic_div_a = 200;
+        r_festivalist.growth_agility.quadratic_div_b = 4;
+
+        r_festivalist.growth_evasion.linear_mult = 0;
+        r_festivalist.growth_evasion.linear_div = 20;
+        r_festivalist.growth_evasion.base_amount = 10;
+        r_festivalist.growth_evasion.quadratic_div_a = 200;
+        r_festivalist.growth_evasion.quadratic_div_b = 4;
+
+        r_festivalist.growth_accuracy.linear_mult = 0;
+        r_festivalist.growth_accuracy.linear_div = 17;
+        r_festivalist.growth_accuracy.base_amount = 120;
+        r_festivalist.growth_accuracy.quadratic_div_a = 200;
+        r_festivalist.growth_accuracy.quadratic_div_b = 4;
+
+        r_festivalist.growth_luck.linear_mult = 0;
+        r_festivalist.growth_luck.linear_div = 22;
+        r_festivalist.growth_luck.base_amount = 13;
+        r_festivalist.growth_luck.quadratic_div_a = 200;
+        r_festivalist.growth_luck.quadratic_div_b = 4;
+
+
+        //weapon and armor
+        r_festivalist.rikku_weapon_data[0].weapon_model = 0x113e;
+        r_festivalist.rikku_weapon_data[0].weapon_position = 5;
+        r_festivalist.rikku_weapon_data[1].weapon_model = 0;
+        r_festivalist.rikku_weapon_data[1].weapon_position = 0;
+        r_festivalist.rikku_weapon_data[2].weapon_model = 0;
+        r_festivalist.rikku_weapon_data[2].weapon_position = 0;
+        r_festivalist.rikku_weapon_data[3].weapon_model = 0;
+        r_festivalist.rikku_weapon_data[3].weapon_position = 0;
+
+
+        // abilities
+        r_festivalist.dressphere_abilities[0].requirement = 0;
+        r_festivalist.dressphere_abilities[0].ability = 0x302D; // Attack
+
+        r_festivalist.dressphere_abilities[1].requirement = 1;
+        r_festivalist.dressphere_abilities[1].ability = 0x31FB; //
+
+        r_festivalist.dressphere_abilities[2].requirement = 1;
+        r_festivalist.dressphere_abilities[2].ability = 0x31F5; //
+
+        r_festivalist.dressphere_abilities[3].requirement = 0x31F5;
+        r_festivalist.dressphere_abilities[3].ability = 0x31F8; //
+
+        r_festivalist.dressphere_abilities[4].requirement = 0x31F8;
+        r_festivalist.dressphere_abilities[4].ability = 0x31FE; //
+
+        r_festivalist.dressphere_abilities[5].requirement = 0;
+        r_festivalist.dressphere_abilities[5].ability = 0x3206;
+        r_festivalist.dressphere_abilities[6].requirement = 1;
+        r_festivalist.dressphere_abilities[6].ability = 0x3207;
+        r_festivalist.dressphere_abilities[7].requirement = 1;
+        r_festivalist.dressphere_abilities[7].ability = 0x3208;
+        r_festivalist.dressphere_abilities[8].requirement = 1;
+        r_festivalist.dressphere_abilities[8].ability = 0x3209;
+        r_festivalist.dressphere_abilities[9].requirement = 0x104;
+        r_festivalist.dressphere_abilities[9].ability = 0x320A;
+        r_festivalist.dressphere_abilities[10].requirement = 0x320A;
+        r_festivalist.dressphere_abilities[10].ability = 0x320B;
+        r_festivalist.dressphere_abilities[11].requirement = 1;
+        r_festivalist.dressphere_abilities[11].ability = 0x805F;
+        r_festivalist.dressphere_abilities[12].requirement = 0x805F;
+        r_festivalist.dressphere_abilities[12].ability = 0x8061;
+        r_festivalist.dressphere_abilities[13].requirement = 1;
+        r_festivalist.dressphere_abilities[13].ability = 0x805C;
+        r_festivalist.dressphere_abilities[14].requirement = 0x805C;
+        r_festivalist.dressphere_abilities[14].ability = 0x8077;
+        r_festivalist.dressphere_abilities[15].requirement = 0x8077;
+        r_festivalist.dressphere_abilities[15].ability = 0x809B;
+
+        // Write the changes to memory
+        *(Job*)h_MsGetRomJob(1, 0x501E, null) = r_festivalist;
+    }
+
+    public unsafe void InitPaineFestivalist() {
+        // read and get copy of Job struct
+        Job p_festivalist = *(Job*)h_MsGetRomJob(2, 0x501F, null);
+
+        p_festivalist.name_offset.text_offset = 2345;
+        p_festivalist.help_offset.text_offset = 2357;
+        p_festivalist.user = 2;
+        p_festivalist.dressphere_menu_ordering = 15;
+        p_festivalist.icon = 99;
+        p_festivalist.berserk_action = 0x302D;
+
+        // stat growth
+        p_festivalist.growth_hp.linear_mult = 38;
+        p_festivalist.growth_hp.quadratic_div = 133;
+        p_festivalist.growth_hp.base_amount = 78;
+
+        p_festivalist.growth_mp.linear_mult = 26;
+        p_festivalist.growth_mp.quadratic_div = 180;
+        p_festivalist.growth_mp.base_amount = 18;
+
+        p_festivalist.growth_strength.linear_mult = 20;
+        p_festivalist.growth_strength.linear_div = 10;
+        p_festivalist.growth_strength.base_amount = 15;
+        p_festivalist.growth_strength.quadratic_div_a = 12;
+        p_festivalist.growth_strength.quadratic_div_b = 1;
+
+        p_festivalist.growth_defense.linear_mult = 3;
+        p_festivalist.growth_defense.linear_div = 200;
+        p_festivalist.growth_defense.base_amount = 32;
+        p_festivalist.growth_defense.quadratic_div_a = 200;
+        p_festivalist.growth_defense.quadratic_div_b = 2;
+
+        p_festivalist.growth_magic.linear_mult = 6;
+        p_festivalist.growth_magic.linear_div = 4;
+        p_festivalist.growth_magic.base_amount = 18;
+        p_festivalist.growth_magic.quadratic_div_a = 200;
+        p_festivalist.growth_magic.quadratic_div_b = 2;
+
+        p_festivalist.growth_magic_defense.linear_mult = 3;
+        p_festivalist.growth_magic_defense.linear_div = 16;
+        p_festivalist.growth_magic_defense.base_amount = 38;
+        p_festivalist.growth_magic_defense.quadratic_div_a = 200;
+        p_festivalist.growth_magic_defense.quadratic_div_b = 2;
+
+        p_festivalist.growth_agility.linear_mult = 0;
+        p_festivalist.growth_agility.linear_div = 17;
+        p_festivalist.growth_agility.base_amount = 54;
+        p_festivalist.growth_agility.quadratic_div_a = 200;
+        p_festivalist.growth_agility.quadratic_div_b = 4;
+
+        p_festivalist.growth_evasion.linear_mult = 0;
+        p_festivalist.growth_evasion.linear_div = 20;
+        p_festivalist.growth_evasion.base_amount = 10;
+        p_festivalist.growth_evasion.quadratic_div_a = 200;
+        p_festivalist.growth_evasion.quadratic_div_b = 4;
+
+        p_festivalist.growth_accuracy.linear_mult = 0;
+        p_festivalist.growth_accuracy.linear_div = 17;
+        p_festivalist.growth_accuracy.base_amount = 120;
+        p_festivalist.growth_accuracy.quadratic_div_a = 200;
+        p_festivalist.growth_accuracy.quadratic_div_b = 4;
+
+        p_festivalist.growth_luck.linear_mult = 0;
+        p_festivalist.growth_luck.linear_div = 22;
+        p_festivalist.growth_luck.base_amount = 13;
+        p_festivalist.growth_luck.quadratic_div_a = 200;
+        p_festivalist.growth_luck.quadratic_div_b = 4;
+
+
+        //weapon and armor
+        p_festivalist.paine_weapon_data[0].weapon_model = 0x1140;
+        p_festivalist.paine_weapon_data[0].weapon_position = 5;
+        p_festivalist.paine_weapon_data[1].weapon_model = 0;
+        p_festivalist.paine_weapon_data[1].weapon_position = 0;
+        p_festivalist.paine_weapon_data[2].weapon_model = 0;
+        p_festivalist.paine_weapon_data[2].weapon_position = 0;
+        p_festivalist.paine_weapon_data[3].weapon_model = 0;
+        p_festivalist.paine_weapon_data[3].weapon_position = 0;
+
+
+        // abilities
+        p_festivalist.dressphere_abilities[0].requirement = 0;
+        p_festivalist.dressphere_abilities[0].ability = 0x302D; // Attack
+
+        p_festivalist.dressphere_abilities[1].requirement = 1;
+        p_festivalist.dressphere_abilities[1].ability = 0x31FC; //
+
+        p_festivalist.dressphere_abilities[2].requirement = 1;
+        p_festivalist.dressphere_abilities[2].ability = 0x31F6; //
+
+        p_festivalist.dressphere_abilities[3].requirement = 0x31F6;
+        p_festivalist.dressphere_abilities[3].ability = 0x31F9; //
+
+        p_festivalist.dressphere_abilities[4].requirement = 0x31F9;
+        p_festivalist.dressphere_abilities[4].ability = 0x31FF; //
+
+        p_festivalist.dressphere_abilities[5].requirement = 0;
+        p_festivalist.dressphere_abilities[5].ability = 0x320D;
+        p_festivalist.dressphere_abilities[6].requirement = 1;
+        p_festivalist.dressphere_abilities[6].ability = 0x320C;
+        p_festivalist.dressphere_abilities[7].requirement = 1;
+        p_festivalist.dressphere_abilities[7].ability = 0x320F;
+        p_festivalist.dressphere_abilities[8].requirement = 1;
+        p_festivalist.dressphere_abilities[8].ability = 0x320E;
+        p_festivalist.dressphere_abilities[9].requirement = 0x105;
+        p_festivalist.dressphere_abilities[9].ability = 0x3210;
+        p_festivalist.dressphere_abilities[10].requirement = 0x3210;
+        p_festivalist.dressphere_abilities[10].ability = 0x3211;
+        p_festivalist.dressphere_abilities[11].requirement = 1;
+        p_festivalist.dressphere_abilities[11].ability = 0x805F;
+        p_festivalist.dressphere_abilities[12].requirement = 0x805F;
+        p_festivalist.dressphere_abilities[12].ability = 0x8061;
+        p_festivalist.dressphere_abilities[13].requirement = 0x8061;
+        p_festivalist.dressphere_abilities[13].ability = 0x8078;
+        p_festivalist.dressphere_abilities[14].requirement = 1;
+        p_festivalist.dressphere_abilities[14].ability = 0x8077;
+        p_festivalist.dressphere_abilities[15].requirement = 0x8077;
+        p_festivalist.dressphere_abilities[15].ability = 0x809B;
+
+        // Write the changes to memory
+        *(Job*)h_MsGetRomJob(2, 0x501F, null) = p_festivalist;
     }
 
     public unsafe void InitYunaFreelancer() {
@@ -692,7 +1102,6 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // Job Creature Data
     }
-
 
     public unsafe void InitPaineFreelancer() {
         ref Job paine_freelancer = ref *paine_freelancer_ptr;

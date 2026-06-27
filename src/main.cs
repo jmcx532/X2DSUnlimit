@@ -1,8 +1,5 @@
-﻿using static Fahrenheit.Mods.X2DSUnlimit.X2DSUnlimitModule;
-
+﻿
 namespace Fahrenheit.Mods.X2DSUnlimit;
-
-
 
 [FhLoad(FhGameId.FFX2)]
 public partial class X2DSUnlimitModule : FhModule {
@@ -15,31 +12,33 @@ public partial class X2DSUnlimitModule : FhModule {
     private unsafe Job* paine_leblancgoon_ptr;
 
     // Local state / save state
-    public static byte freelancer_quantity = 0;
-    public static byte leblanc_goon_quantity = 0;
+    public static byte   freelancer_quantity = 0;
+    public static byte   leblanc_goon_quantity = 0;
     public static ushort freelancer_ability_learning = 0;
     public static ushort leblancgoon_ability_learning = 0;
 
     private class X2DSUnlimitState
     {
-        public byte freelancer_quantity { get; set; }
-        public ushort freelancer_ability_learning { get; set; }
-        public byte leblanc_goon_quantity { get; set; }
+        public byte   freelancer_quantity          { get; set; }
+        public ushort freelancer_ability_learning  { get; set; }
+        public byte   leblanc_goon_quantity        { get; set; }
         public ushort leblancgoon_ability_learning { get; set; }
-
 
         public X2DSUnlimitState()
         {
             this.freelancer_quantity = X2DSUnlimitModule.freelancer_quantity;
-            this.freelancer_ability_learning = X2DSUnlimitModule.freelancer_ability_learning;
             this.leblanc_goon_quantity = X2DSUnlimitModule.leblanc_goon_quantity;
+
+            this.freelancer_ability_learning  = X2DSUnlimitModule.freelancer_ability_learning;
             this.leblancgoon_ability_learning = X2DSUnlimitModule.leblancgoon_ability_learning;
         }
     }
 
-    // table replacements
-    //Freelancer/Leblanc Goon ID's appended to mod copt of DAT_00D63e78 table (ffx-2.exe + 0x963e78)
-    //TOMsJobAbilityWindow+ and other functions (many)
+    /// <summary>
+    /// Table replacements
+    /// Freelancer/Leblanc Goon ID's appended to mod copt of DAT_00D63e78 table (ffx-2.exe + 0x963e78)
+    /// TOMsJobAbilityWindow+ and other functions (many)
+    /// </summary>
     private static readonly ushort[] CustomTOMSJAW_DS_Table =
 {
     0x5000, 0x5001, 0x5002, 0x5003, 0x5004, 0x5005,
@@ -51,7 +50,7 @@ public partial class X2DSUnlimitModule : FhModule {
     0x5017, 0x5020, 0x5021
 };
 
-    //replaces lookup table at: ffx-2.exe + cc36cc, used by the kyGetJobNum series of functions and kyGetUsedPoint only.
+    //replaces lookup table at: ffx-2.exe + cc36cc, used by the kyGetJobNum series of functions and kyGetUsedPoint ONLY.
     private static readonly ushort[] CustomDsLookupTable =
 {
     0x0001, 0x0002, 0x0003, 0x0004, 0x0005,
@@ -60,9 +59,11 @@ public partial class X2DSUnlimitModule : FhModule {
     0x001d, 0x001f, 0x0020, 0x0021, 0x0022
 };
 
+
     public unsafe X2DSUnlimitModule() {
         int addr_offset = 0x400000;
 
+        #region // MethodHandles
         _MsCheckRange_handle = new FhMethodHandle<MsCheckRange>(this, "FFX-2.exe", 0x624cd0 - addr_offset, h_MsCheckRange);
 
         // rework in future to extend job.bin
@@ -143,6 +144,8 @@ public partial class X2DSUnlimitModule : FhModule {
         //write Excel bin pointers
         _FUN_6083B0_handle =  new FhMethodHandle<FUN_6083B0>(this, "FFX-2.exe", 0x6083b0 - addr_offset, h_FUN_6083B0);
 
+        #endregion MethodHanldles
+
         // malloc for C# defined jobs and initialisation
         rikku_freelancer_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
         rikku_leblancgoon_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
@@ -151,6 +154,7 @@ public partial class X2DSUnlimitModule : FhModule {
         InitNewJobs();
 
     }
+
 
 
     public int h_MsGetChr(uint chr_id) {
@@ -197,7 +201,7 @@ public partial class X2DSUnlimitModule : FhModule {
         return _MsCheckAbility_handle.orig_fptr.Invoke(p1, p2, p3);
     }
 
-    public uint h_MsBtlMonsterSaveNumCheck(uint param_1) {
+    public bool h_MsBtlMonsterSaveNumCheck(uint param_1) {
         return _MsBtlMonsterSaveNumCheck_handle.orig_fptr.Invoke(param_1);
     }
 

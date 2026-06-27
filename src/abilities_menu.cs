@@ -274,7 +274,7 @@ public partial class X2DSUnlimitModule : FhModule {
         nint DAT_11bb200_addr = (nint)DAT_11bb200;
 
         //local_10 = &DAT_011bb200 + (param_2 & 0xfff) * 0x44;
-        local_10 = (uint*)DAT_11bb200_addr + (job_id & 0xfff) * 0x44;
+        local_10 = (uint*)DAT_11bb200_addr + (job_id & 0xfff) * 0x44; // start of ability list data
         local_8 = chr_id;
 
         byte* local_1c = stackalloc byte[64];
@@ -290,20 +290,23 @@ public partial class X2DSUnlimitModule : FhModule {
         local_18 = 0x10;
         do
         {
-            uVar7 = (uint)*local_14;
-            //*(undefined1*)(iVar2 + -3) = 0;
-            //*(undefined2*)(iVar2 + -1) = 0;
-            *(byte*)(iVar2 + -3) = 0;
-            *(ushort*)(iVar2 + -1) = 0; // zeroes is_selected bool
-            *(uint*)(iVar2 + 1) = uVar7;
-            uVar3 = h_MsGetSaveAp(uVar1, uVar7);
+            uVar7 = (uint)*local_14; // command/a_ability id
+            
+            *(byte*)(iVar2 + -3) = 0; // zeroes is visible bool
+            *(ushort*)(iVar2 + -1) = 0; // zeroes is mastered bool
+
+            *(uint*)(iVar2 + 1) = uVar7; // command
+
+            uVar3 = h_MsGetSaveAp(uVar1, uVar7); // current AP
             *(uint*)(iVar2 + 5) = uVar3;
-            iVar4 = h_MsGetSaveNeedAp((byte)uVar1, uVar7);
+
+            iVar4 = h_MsGetSaveNeedAp((byte)uVar1, uVar7); // Needed AP
             uVar3 = local_8;
             *(int*)(iVar2 + 9) = iVar4;
-            if (iVar4 < *(int*)(iVar2 + 5))
+
+            if (iVar4 < *(int*)(iVar2 + 5)) // if current AP greater than needed AP
             {
-                *(int*)(iVar2 + 5) = iVar4;
+                *(int*)(iVar2 + 5) = iVar4; // set current AP to needed AP Value (cap, stop increasing)
             }
             local_14 = local_14 + 2;
             iVar2 = iVar2 + 0x10;
@@ -323,12 +326,12 @@ public partial class X2DSUnlimitModule : FhModule {
                 {
                     if (*puVar8 == (uint)*(ushort*)(local_18 + iVar5 * 2))
                     {
-                        *(byte*)(puVar8 + -1) = 1;
+                        *(byte*)(puVar8 - 1) = 1; // updates is_selected bool
                         uVar7 = h_MsGetSaveLearn(uVar3, job_id);
                         iVar2 = local_c;
                         if (uVar7 == *puVar8)
                         {
-                            *(byte*)((int)puVar8 + -1) = 1;// updates is_selected bool
+                            *(byte*)((int)puVar8 - 1) = 1; // updates is_selected bool
                         }
                         break;
                     }
@@ -338,10 +341,12 @@ public partial class X2DSUnlimitModule : FhModule {
             puVar8 = puVar8 + 4;
             iVar4 = iVar4 + -1;
         } while (iVar4 != 0);
+
         iVar4 = h_MsGetJobAbilityList((int)uVar3, (int)job_id, &local_c, 1);
-        pbVar9 = (byte*)((int)local_10 + 0x12);
+        pbVar9 = (byte*)((int)local_10 + 0x12); // skip jobid header part of AbilityListData, centers on is_mastered
         pbVar6 = pbVar9;
-        iVar2 = 0x10;
+
+        iVar2 = 0x10; // 16 abilities
         do
         {
             iVar5 = iVar2;
@@ -350,18 +355,27 @@ public partial class X2DSUnlimitModule : FhModule {
             {
                 do
                 {
-                    if (*(uint*)(pbVar6 + 2) == (uint)*(ushort*)(iVar4 + iVar2 * 2))
+
+                    /*
+                    uint testedability_maybe = *(uint*)(pbVar6 + 2);
+                    uint tested_against = (uint)*(ushort*)(iVar4 + iVar2 * 2); // from job_abilities
+                    */
+
+                    // if ability id? = &DAT_DF9258 + 
+                    if (*(uint*)(pbVar6 + 2) == (uint)*(ushort*)(iVar4 + iVar2 * 2)) 
                     {
-                        pbVar6[-2] = 1;
-                        pbVar6[0] = 1;
-                        pbVar6[1] = 0;
+
+                        pbVar6[-2] = 1; // is visible
+                        pbVar6[0] = 1; // is mastered
+                        pbVar6[1] = 0; // is selected
                         break;
                     }
                     iVar2 = iVar2 + 1;
                 } while (iVar2 < local_c);
             }
-            pbVar6 = pbVar6 + 0x10;
+            pbVar6 = pbVar6 + 0x10; //AbilityListDataAbility struct size
             iVar2 = iVar5 + -1;
+
             if (iVar2 == 0)
             {
                 iVar4 = 0;
@@ -430,15 +444,15 @@ public partial class X2DSUnlimitModule : FhModule {
     }
 
     // In Abilities Menu, job list - handles command window preview and auto abilities
-    public unsafe int h_MsGetJobAbilityList(int param_1, int param_2, int* param_3, int param_4)
+    public unsafe int h_MsGetJobAbilityList(int chr_id, int job_id, int* param_3, int param_4)
     {
-        short sVar1;
-        short sVar2;
-        uint uVar3;
-        uint uVar4;
+        ushort ability;
+        ushort requirement;
+        uint chr_num;
+        uint chr_level;
         int iVar5;
-        int iVar6;
-        int iVar7;
+        bool is_monster;
+        int num_abilities_to_check;
         int iVar8;
         int iVar9;
         int iVar10;
@@ -452,53 +466,56 @@ public partial class X2DSUnlimitModule : FhModule {
         nint DAT_00df9258_addr = (nint)(DAT_00df9258);
 
         iVar13 = 0;
-        uVar3 = h_MsGetChrNum((uint)param_1);
-        uVar4 = (uint)h_MsCalcChrLevel((byte)uVar3);
+        chr_num = h_MsGetChrNum((uint)chr_id);
+        chr_level = (uint)h_MsCalcChrLevel((byte)chr_num);
 
         //iVar5 = _MsGetRomJob(uVar3, (uint)param_2, 0);
-        iVar5 = (int)h_MsGetRomJob(uVar3, (uint)param_2, null);
+        iVar5 = (int)h_MsGetRomJob(chr_num, (uint)job_id, null);
         if (iVar5 != 0)
         {
-
-            iVar6 = (int)h_MsBtlMonsterSaveNumCheck(uVar3);
-            if (iVar6 == 0)
+            // Check if Player character or Creature
+            is_monster = h_MsBtlMonsterSaveNumCheck(chr_num);
+            if (!is_monster)
             {
-                iVar7 = 0x10;
+                num_abilities_to_check = 0x10;
                 iVar5 = iVar5 + 0x3c;//job.bin ds abilities table
             }
             else
             {
-                iVar7 = 2;
+                num_abilities_to_check = 2;
                 iVar5 = iVar5 + 0xb0;
             }
             
 
             if (iVar5 != 0)
             {
-                for (iVar14 = 0; iVar14 < iVar7; iVar14++)
+                for (iVar14 = 0; iVar14 < num_abilities_to_check; iVar14++)
                 {
-                    sVar1 = *(short*)(iVar5 + 2 + iVar14 * 4);
-                    sVar2 = *(short*)(iVar5 + iVar14 * 4);
-                    if (sVar1 != 0)
-                    {
-                        iVar8 = (int)h_MsCheckAbility(uVar3, sVar2, (int)uVar4);
-                        iVar9 = (int)h_FUN_6294f0((uint)sVar1, (int)DAT_00df9258_addr, iVar13);/* Excel/MsGetRomAbility related */
-                        iVar10 = h_MsCheckLearnCommand((byte)uVar3, sVar1);
-                        iVar11 = (int)h_MsGetSaveCommand(uVar3, (uint)sVar1);
+                    // iVar5 is the address of Job.dressphere_abilities here
+                    ability = *(ushort*)(iVar5 + 2 + iVar14 * 4);
+                    requirement = *(ushort*)(iVar5 + iVar14 * 4);
 
-                        bool left_condition = iVar6 != 0 || param_4 == 0 || sVar2 == 0 || iVar11 !=0;
-                        bool right_condition = (iVar8 != 0 && iVar9 != 0) && (iVar10 != 0 && (iVar13 < 10));
+                    if (ability != 0)
+                    {
+                        iVar8 = (int)h_MsCheckAbility(chr_num, requirement, (int)chr_level); // does the character have the prereq
+                        iVar9 = (int)h_FUN_6294f0((uint)ability, (int)DAT_00df9258_addr, iVar13);/* Excel/MsGetRomAbility related */
+                        iVar10 = h_MsCheckLearnCommand((byte)chr_num, ability);
+                        iVar11 = (int)h_MsGetSaveCommand(chr_num, (uint)ability);
+
+                        bool left_condition = is_monster || param_4 == 0 || requirement == 0 || iVar11 != 0;
+                        bool right_condition = (iVar8 != 0 && iVar9 != 0) && (iVar10 != 0 && (iVar13 < 0x10));
                         
                         if (left_condition && right_condition)
                         {
                             //*(short*)((int)&DAT_00df9258 + iVar13 * 2) = sVar1;
-                            DAT_00df9258[iVar13] = (ushort)sVar1;
+                            DAT_00df9258[iVar13] = ability;
                             iVar13 = iVar13 + 1;
                         }
 
                     }
                 }
 
+                // if reached maximum abilities return
                 if (iVar13 > 0xF)
                 {
                     goto LAB_00629c2d;
@@ -508,9 +525,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
         }
 
-        ushort* DAT_00ff00ff = FhUtil.ptr_at<ushort>(0xbf00ff); // contains auto-abilities and commands to add from accessories
-        nint DAT_00ff00ff_addr = (nint)(DAT_00ff00ff);
-
+        // reset
         for (int i = iVar13; i < 16; i++)
         {
             DAT_00df9258[i] = 0x00FF;

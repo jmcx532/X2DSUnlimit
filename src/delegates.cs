@@ -141,7 +141,7 @@ public partial class X2DSUnlimitModule : FhModule
     private readonly FhMethodHandle<MsGetRomAbility> _MsGetRomAbility_handle;//61de50
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate uint MsBtlMonsterSaveNumCheck(uint p1); //610440
+    public delegate bool MsBtlMonsterSaveNumCheck(uint p1); //610440
     private readonly FhMethodHandle<MsBtlMonsterSaveNumCheck> _MsBtlMonsterSaveNumCheck_handle;//610440
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
