@@ -144,7 +144,10 @@ public partial class X2DSUnlimitModule : FhModule {
         //write Excel bin pointers
         _FUN_6083B0_handle =  new FhMethodHandle<FUN_6083B0>(this, "FFX-2.exe", 0x6083b0 - addr_offset, h_FUN_6083B0);
 
-        #endregion MethodHanldles
+        // face portraits
+        _TOGetFaceIndex2_handle = new FhMethodHandle<TOGetFaceIndex2>(this, "FFX-2.exe", 0x793190 - addr_offset, h_TOGetFaceIndex2);
+
+        #endregion MethodHandles
 
         // malloc for C# defined jobs and initialisation
         rikku_freelancer_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
@@ -154,8 +157,6 @@ public partial class X2DSUnlimitModule : FhModule {
         InitNewJobs();
 
     }
-
-
 
     public int h_MsGetChr(uint chr_id) {
         return _MsGetChr_handle.orig_fptr.Invoke(chr_id);
@@ -219,67 +220,6 @@ public partial class X2DSUnlimitModule : FhModule {
 
     public uint h_MsGetChrNum(uint param_1) {
         return _MsGetChrNum_handle.orig_fptr.Invoke(param_1);
-    }
-
-    public unsafe byte* h_MsGetSaveChrName(int chr_id) {
-        return _MsGetSaveChrName_handle.orig_fptr.Invoke(chr_id);
-    }
-
-    // reimplementation so job name string is read correctly from job.bin for C# defined jobs
-    // Returns a memory address at which a null-terminated string is located.
-    public unsafe uint h_TOGetSaveJobName(uint chr_id) {
-
-        uint job_id;
-
-        int job_bin_base = FhUtil.get_at<int>(0x9f9188); // memory address of job.bin
-        int string_start = *(int*)(job_bin_base + 0x18); // read from excel header
-        int string_table_base = job_bin_base + 0x20 + string_start; //base, skip header, jump to start of string table
-
-
-        job_id = h_MsGetSaveJob(chr_id);
-        byte* local_8 = null;
-        ushort name_string_pointer = *(ushort*)(h_MsGetRomJob(chr_id, job_id, local_8));
-
-        //custom name handling
-        HandleCustomCharacterName(chr_id, job_id);
-
-        return (uint)(string_table_base + name_string_pointer); // memory address, start of null terminated byte string
-
-    }
-
-    // reimplementation so job help string is read correctly from job.bin for C# defined jobs
-    // runs TOMenuSetHelpMes which takes a memory address of a null terminated byte string as a parameter.
-    public unsafe void h_FUN_5E59B0(uint job_id) {
-        if (0x5020 <= job_id) {
-
-            int job_bin_base = FhUtil.get_at<int>(0x9f9188); // memory address of job.bin
-            int string_start = *(int*)(job_bin_base + 0x18); // read from excel header
-            int string_table_base = job_bin_base + 0x20 + string_start; //base, skip header, jump to start of string table
-
-            int chr_id = FhUtil.get_at<int>(0x9f6d80);
-            byte* out_data_end = null;
-
-            Job considered_job = *(Job*)h_MsGetRomJob((uint)chr_id, job_id, out_data_end);
-
-            ushort help_string_offset = considered_job.help_offset.text_offset;
-            ushort cre_help_string_offset = considered_job.creature_data.help_text.text_offset;
-
-            //ushort help_string_offset = *(ushort*)(h_MsGetRomJob((uint)chr_id, job_id, out_data_end) + 0x4); // use this to get help string offset
-            //ushort cre_help_string_offset = *(ushort*)(h_MsGetRomJob((uint)chr_id, job_id, out_data_end) + 0xAC);
-
-            // cre help
-            if (chr_id > 2) {
-                h_TOMenuSetHelpMes(string_table_base + cre_help_string_offset);
-            }
-            h_TOMenuSetHelpMes(string_table_base + help_string_offset);
-        }
-        else {
-            _FUN_5E59B0_handle.orig_fptr.Invoke(job_id);
-        }
-    }
-
-    public void h_TOMenuSetHelpMes(int addr_of_txt_bytes) {
-        _TOMenuSetHelpMes_handle.orig_fptr.Invoke(addr_of_txt_bytes);
     }
 
     // handle FL/LG getting ability to be learned
@@ -354,8 +294,6 @@ public partial class X2DSUnlimitModule : FhModule {
         return 0;
     }
 
-
-    // util
     public int h_MsCheckRange(int number, int lower_bound, int upper_bound)
     {
         return _MsCheckRange_handle.orig_fptr.Invoke(number, lower_bound, upper_bound);
@@ -370,8 +308,6 @@ public partial class X2DSUnlimitModule : FhModule {
      */
     public unsafe Job* h_MsGetRomJob(uint chr_id, uint job_id, byte* out_data_end)
     {
-        
-        
         if(job_id == 0x5020) {
             if (chr_id == 1) {
                 return rikku_freelancer_ptr;
@@ -394,42 +330,6 @@ public partial class X2DSUnlimitModule : FhModule {
         return _MsGetRomJob_handle.orig_fptr.Invoke(chr_id, job_id, out_data_end);
     }
 
-
-    // param_1 and 2 tell where GG DS icon is drawn (special game co-ord system - not based on resolution)
-    // fix LG/FL showing blank icon on Garment Grid
-    public void h_FUN_5E7580(int grid_x, int grid_y, int icon, uint param_4)
-    {
-        /* Icon map (param_3_
-     * 1,2 -> Red/Green Gate
-     * 3,4
-     * 5,6 -> ??,, Shiny Grey orb (1: gate background orb, 2:  used as bg for some Dressspheres) Use standalone for LG/FL?
-     * 7,14 ->, Gunner/Songstress
-     * 8, -> gun mage
-     * 21, 22 -> Psychic/Festivalist
-     * 23, 24, 25 -> Floral Fallal, Machina Maw, Full Throttle
-     * 26, 27 -> greyORBluish flash/pulsing, Yellow flash/pulsing
-     * 28,29,30 -> nope
-     * 99 -> Full Throttle
-     */
-
-        if (icon == 38) // FL or LG
-        {
-            _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, 6, param_4);
-            _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, 26, param_4);
-            return;
-        }
-
-        if (icon == 39) // FL or LG
-        {
-            _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, 6, param_4);
-            _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, 27, param_4);
-            return;
-        }
-
-
-        _FUN_5E7580_handle.orig_fptr.Invoke(grid_x, grid_y, icon, param_4);
-    }
-
     // Used in Garment Grid Menu, necessary for Freelancer/Leblanc Goon to show up in Dressphere List
     public unsafe uint h_kyGetJobNum()
     {
@@ -448,26 +348,20 @@ public partial class X2DSUnlimitModule : FhModule {
                 unique_ds_on_grid_list[number_of_elements] = (byte)CustomDsLookupTable[i];
                 number_of_elements++;
             }
-
         }
 
         FhUtil.set_at<byte>(0x9f602c, (byte)number_of_elements);
-        _logger.Info("Return result: " + number_of_elements.ToString());
+        //_logger.Info("Return result: " + number_of_elements.ToString());
         return number_of_elements;
-
-        //uint original_result = _kyGetJobNum_handle.orig_fptr.Invoke();
-        //_logger.Info("Return result: " + original_result.ToString());
-        //return original_result;
     }
 
 
 
     //returns the owned quantity of a given dressphere
     public unsafe int h_MsGetSaveDreSphere(uint ds_id)
-
     {
-        //Freelancer, Leblanc Goon +
-        if ((ds_id & 0xfff) > 0x1e)
+        
+        if ((ds_id & 0xfff) > 0x1e) //Freelancer, Leblanc Goon handling
         {
             switch(ds_id & 0xfff)
             {
@@ -480,8 +374,7 @@ public partial class X2DSUnlimitModule : FhModule {
             }
         }
 
-        // Vanilla dresspheres
-        if ((ds_id & 0xfff) < 0x1e)
+        if ((ds_id & 0xfff) < 0x1e) // Vanilla dresspheres
         {
             byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c);
             return (int)*(byte*)(DAT_00E00D1C + (ds_id & 0xfff));
@@ -495,12 +388,11 @@ public partial class X2DSUnlimitModule : FhModule {
     {
         int quantity;
 
-        //int* DAT_00e00d1c = FhUtil.ptr_at<int>(0xa00d1c);
-        byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c);
+        byte* DAT_00E00D1C = FhUtil.ptr_at<byte>(0xa00d1c); // dressphere quantities memory region
         ds_id = ds_id & 0xfff;
 
-        // Freelance, Leblanc Goon +
-        if (ds_id > 0x1e)
+        
+        if (ds_id > 0x1e) // Freelancer, Leblanc Goon handling
         {
             switch (ds_id)
             {
@@ -513,17 +405,13 @@ public partial class X2DSUnlimitModule : FhModule {
             }
         }
 
-        //vanilla
-        if (ds_id < 0x1e)
+        if (ds_id < 0x1e) // Vanilla behaviour
         {
             quantity = h_MsCheckRange(*(byte*)(DAT_00E00D1C + ds_id) + param_2, 0, 99);
-            
             *(byte*)(DAT_00E00D1C + ds_id) = (byte)quantity;
-
-            //(&DAT_00e00d1c)[param_1] = (byte)iVar1;
-
             return quantity;
         }
+
         return 0;
     }
 
@@ -569,18 +457,22 @@ public partial class X2DSUnlimitModule : FhModule {
             && _MsGetJobNumBasic_handle.hook()
             && _MsBtlPlayerSaveNumCheck_handle.hook()
 
+
             && _TOGetSaveJobName_handle.hook()
             && _MsGetSaveJob_handle.hook()
             && _FUN_5E59B0_handle.hook()
             && _TOMenuSetHelpMes_handle.hook()
+
 
             && _MsGetChrID_handle.hook()
             && _MsSetRamMotionChrData_handle.hook()
             && _MsGetChr_handle.hook()
             && _beta_fx_handle.hook()
             && _charlie_fx_handle.hook()
-            && _MsGetSaveChrName_handle.hook();
-            
+            && _MsGetSaveChrName_handle.hook()
+
+            && _TOGetFaceIndex2_handle.hook();
+
             //&& _FUN_778160_handle.hook();
     }
 

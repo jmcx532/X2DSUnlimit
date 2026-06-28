@@ -1,5 +1,9 @@
 ﻿namespace Fahrenheit.Mods.X2DSUnlimit;
 
+/// <summary>
+/// Each dressphere has motion data present in system_01.bin, however, there is none present for Freelancer and Leblanc Goon.
+/// Here you can set motion data for Freelancer and Leblanc Goon as required.
+/// </summary>
 
 // this is as the data is laid out in system_01.bin - not in game memory!
 // for ram layout, see jppc/battle/btl/system_01/mot_system_01.txt
@@ -9,7 +13,6 @@ public struct MotionChrData {
     public byte job_num;
 
     public short mot_bin_num;
-
     public short round_frame;
     public short attack_frame;
 

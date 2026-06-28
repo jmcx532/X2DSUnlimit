@@ -391,6 +391,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     pbVar9 = pbVar9 + 0x10;
                     iVar5 = iVar5 + -1;
                 } while (iVar5 != 0);
+
                 if ((iVar2 == 0) || (iVar4 == 0))
                 {
                     local_10[2] = 0;
@@ -399,12 +400,18 @@ public partial class X2DSUnlimitModule : FhModule {
                 {
                     local_10[2] = (uint)((iVar2 * 0x54) / iVar4);
 
-
-                    uint* DAT_11bd420 = FhUtil.ptr_at<uint>(0xdbd420);
-
-
+                    //uint* DAT_11bd420 = FhUtil.ptr_at<uint>(0xdbd420);
                     //pbVar6 = &DAT_011bd420;
-                
+                    byte* start_ptr = FhUtil.ptr_at<byte>(0xdbd420);
+                    byte* end_ptr  = FhUtil.ptr_at<byte>(0xdbd520);
+
+                    for (byte* pcVar5 = start_ptr; pcVar5 < end_ptr; pcVar5 += 0x40) {
+                        if (pcVar5[-0x20] == 1) { local_10[2]++; }
+                        if (pcVar5[-0x10] == 1) { local_10[2]++; }
+                        if (pcVar5[0x00] == 1)  { local_10[2]++; }
+                        if (pcVar5[0x10] == 1)  { local_10[2]++; }
+                    }
+                    /*
                     do
                     {
                         if (pbVar6[-0x20] == 1)
@@ -425,6 +432,7 @@ public partial class X2DSUnlimitModule : FhModule {
                         }
                         pbVar6 = pbVar6 + 0x40;
                     } while ((int)pbVar6 < 0x11bd520);
+                    */
                 }
                 else
                 {
@@ -473,8 +481,7 @@ public partial class X2DSUnlimitModule : FhModule {
         iVar5 = (int)h_MsGetRomJob(chr_num, (uint)job_id, null);
         if (iVar5 != 0)
         {
-            // Check if Player character or Creature
-            is_monster = h_MsBtlMonsterSaveNumCheck(chr_num);
+            is_monster = h_MsBtlMonsterSaveNumCheck(chr_num); // Check if Player character or Creature
             if (!is_monster)
             {
                 num_abilities_to_check = 0x10;
@@ -483,7 +490,7 @@ public partial class X2DSUnlimitModule : FhModule {
             else
             {
                 num_abilities_to_check = 2;
-                iVar5 = iVar5 + 0xb0;
+                iVar5 = iVar5 + 0xb0; // creature data
             }
             
 
@@ -511,22 +518,19 @@ public partial class X2DSUnlimitModule : FhModule {
                             DAT_00df9258[iVar13] = ability;
                             iVar13 = iVar13 + 1;
                         }
-
                     }
+
                 }
 
-                // if reached maximum abilities return
-                if (iVar13 > 0xF)
+                
+                if (iVar13 > 0xF) // if reached maximum abilities return
                 {
                     goto LAB_00629c2d;
                 }
             }
-
-
         }
 
-        // reset
-        for (int i = iVar13; i < 16; i++)
+        for (int i = iVar13; i < 16; i++) // reset memory
         {
             DAT_00df9258[i] = 0x00FF;
         }
@@ -538,10 +542,7 @@ public partial class X2DSUnlimitModule : FhModule {
             *param_3 = 0x10;
         }
 
-        // Returns mem location of added command/abilities From Accessories
-        return (int)DAT_00df9258_addr;
-
-        //return _MsGetJobAbilityList_handle.orig_fptr.Invoke(param_1, param_2, param_3, param_4);
+        return (int)DAT_00df9258_addr; // Returns mem location of added command/abilities From Accessories
     }
 
 

@@ -1,209 +1,20 @@
 ﻿namespace Fahrenheit.Mods.X2DSUnlimit;
 
+/// <summary>
+/// Customise dressphere data here!
+/// 
+/// This file implements: 
+/// Overwrite Festivalist/Freelancer/Leblanc Goon job.bin entries in memory instead of needing to EFL them.
+/// *Still need EFL at present for custom strings.*
+/// 
+/// Job data definitions for Freelancer and Leblanc Goon - one per character instead of the lone one in job.bin.
+/// </summary>
+
 public partial class X2DSUnlimitModule : FhModule {
-
-    //624f90 - used to overwrite the character model to be loaded in battle
-    public unsafe uint h_MsGetChrID(uint chr_id) {
-        //invoke as normal
-        uint orig_return_result = _MsGetChrID_handle.orig_fptr.Invoke(chr_id);
-
-        //get character battle info address, change model under certain conditions and return
-        int chr_base_addr = h_MsGetChr(chr_id);
-        int original_model = *(int*)(chr_base_addr + 4);
-        ushort* party_ds_record_base = FhUtil.ptr_at<ushort>(0xa016f6);
-
-        switch (original_model) {
-            //Yuna Gunner model / Festivalist
-            case 974:
-            case 1:
-                ushort y_ds_record = *(ushort*)(party_ds_record_base);
-                // Festivalist replacement
-                if ((y_ds_record) == 0x501d) {
-                    *(int*)(chr_base_addr + 4) = 0x1139;
-                    *(int*)(chr_base_addr + 8) = 0x1139;
-                    WriteChrName(CharName.Kimahri, chr_id);
-                    return chr_id;
-                }
-                // Freelancer replacement
-                if ((y_ds_record) == 0x5020) {
-                    *(int*)(chr_base_addr + 4) = 0x1139;
-                    *(int*)(chr_base_addr + 8) = 0x1139;
-                    return chr_id;
-                }
-                // Leblanc Goon Replacement
-                if ((y_ds_record) == 0x5021) {
-                    *(int*)(chr_base_addr + 4) = 0x1139;
-                    *(int*)(chr_base_addr + 8) = 0x1139;
-                    return chr_id;
-                }
-                return chr_id;
-            // Rikku Thief model / Festivalist
-            case 975:
-            case 26:
-                ushort r_ds_record = *(ushort*)(party_ds_record_base + (1 * 0x40));
-                // Festivalist replacement
-                if ((r_ds_record) == 0x501E) {
-                    *(int*)(chr_base_addr + 4) = 0x113D;
-                    *(int*)(chr_base_addr + 8) = 0x113D;
-                    WriteChrName(CharName.Tidus, chr_id);
-                    return chr_id;
-                }
-                // Freelancer replacement
-                if (r_ds_record == 0x5020) {
-                    *(int*)(chr_base_addr + 4) = 0x113D;
-                    *(int*)(chr_base_addr + 8) = 0x113D;
-                    return chr_id;
-                }
-                // Leblanc Goon Replacement
-                if (r_ds_record == 0x5021) {
-                    *(int*)(chr_base_addr + 4) = 0x113D;
-                    *(int*)(chr_base_addr + 8) = 0x113D;
-                    return chr_id;
-                }
-                return chr_id;
-            // Paine Warrior model / Festivalist
-            case 976:
-            case 51:
-                ushort p_ds_record = *(ushort*)(party_ds_record_base + (2 * 0x40));
-                // Festivalist replacement
-                if ((p_ds_record) == 0x501F) {
-                    *(int*)(chr_base_addr + 4) = 0x113F;
-                    *(int*)(chr_base_addr + 8) = 0x113F;
-                    WriteChrName(CharName.Seymour, chr_id);
-                    return chr_id;
-                }
-                // Freelancer replacement
-                if (p_ds_record == 0x5020) {
-                    *(int*)(chr_base_addr + 4) = 0x113F;
-                    *(int*)(chr_base_addr + 8) = 0x113F;
-                    return chr_id;
-                }
-                // Leblanc Goon Replacement
-                if (p_ds_record == 0x5021) {
-                    *(int*)(chr_base_addr + 4) = 0x113F;
-                    *(int*)(chr_base_addr + 8) = 0x113F;
-                    return chr_id;
-                }
-                return chr_id;
-            //Yuna White Mage Replace with FFX Model
-            case 18:
-                *(int*)(chr_base_addr + 4) = 0x0386;
-                *(int*)(chr_base_addr + 8) = 0x0386;
-                return chr_id;
-            default:
-                //if model not changed just return original return result
-                if (chr_id == 0) {
-                    WriteChrName(CharName.Yuna, chr_id);
-                }
-
-                return orig_return_result;
-
-        }
-
-    }
-
-
-
-    public enum CharName {
-        Yuna = 0,
-        Rikku = 1,
-        Paine = 2,
-        Kimahri = 3,
-        Tidus = 4,
-        Seymour = 5
-
-    }
-
-    // Write Chr Name to party and btl_chr name buffers
-    public unsafe void WriteChrName(CharName character_name, uint chr_id) {
-        byte* party_name_area = FhUtil.ptr_at<byte>(0xa05ffc);
-        byte* party_name_base = party_name_area + (chr_id * 40);
-
-
-        Span<byte> party_name_buffer = new Span<byte>(party_name_base, 40);
-        ReadOnlySpan<byte> name = character_name switch
-            {
-                CharName.Yuna    => "Yuna"u8,
-                CharName.Rikku => "Rikku"u8,
-                CharName.Paine => "Paine"u8,
-                CharName.Kimahri => "Kimahri"u8,
-                CharName.Tidus => "Tidus"u8,
-                CharName.Seymour => "Seymour"u8,
-                _                => "Yuna"u8
-            };
-
-        party_name_buffer.Clear();
-        FhEncoding.encode(name, party_name_buffer);
-
-
-
-        // in battle overwrite Chr string
-        int btl_chr_ptr = FhUtil.get_at<int>(0xa0fbac);
-        if (btl_chr_ptr != 0){
-            int chr_base_addr = h_MsGetChr(chr_id);
-            byte* name_area = (byte*)chr_base_addr + 0x358;
-
-            Span<byte> name_buffer = new Span<byte>(name_area, 40);
-            name_buffer.Clear();
-            FhEncoding.encode(name, name_buffer);
-        }
-
-        
-    }
-
-    private void HandleCustomCharacterName(uint chr_id, uint job_id) {
-        switch (chr_id) {
-            case 0:
-                if (job_id == 0x501d) {
-                    WriteChrName(CharName.Kimahri, 0);
-                }
-                else if (job_id == 0x5020) {
-                    WriteChrName(CharName.Kimahri, 0);
-                }
-                else if (job_id == 0x5021) {
-                    WriteChrName(CharName.Kimahri, 0);
-                }
-                else {
-                    WriteChrName(CharName.Yuna, 0);
-                }
-                break;
-
-            case 1:
-                if (job_id == 0x501E) {
-                    WriteChrName(CharName.Tidus, 1);
-                }
-                else if (job_id == 0x5020) {
-                    WriteChrName(CharName.Tidus, 1);
-                }
-                else if (job_id == 0x5021) {
-                    WriteChrName(CharName.Tidus, 1);
-                }
-                else {
-                    WriteChrName(CharName.Rikku, 1);
-                }
-                break;
-
-            case 2:
-                if (job_id == 0x501F) {
-                    WriteChrName(CharName.Seymour, 2);
-                }
-                else if (job_id == 0x5020) {
-                    WriteChrName(CharName.Seymour, 2);
-                }
-                else if (job_id == 0x5021) {
-                    WriteChrName(CharName.Seymour, 2);
-                }
-                else {
-                    WriteChrName(CharName.Paine, 2);
-                }
-                break;
-        }
-    }
 
 
     /// <summary>
-    /// Overwrite Festivalist/Freelancer/Leblanc Goon job.bin entries in memory instead of needing to EFL them.
-    /// Still need EFL at present for custom strings.
+    /// Overwrites Job entries in memory after job.bin has been loaded.
     /// </summary>
     bool F6083B0_runOnce = false;
     //param_1 is a custom excel bin number, 8 is Job.bin
@@ -214,7 +25,7 @@ public partial class X2DSUnlimitModule : FhModule {
             F6083B0_runOnce = true;
             InitYunaFreelancer();
             InitYunaLeblancGoon();
-            //_logger.Info("Overwrite job.bin Fl/LG for Yuna");
+            
             InitYunaFestivalist();
             InitRikkuFestivalist();
             InitPaineFestivalist();
@@ -223,8 +34,8 @@ public partial class X2DSUnlimitModule : FhModule {
         return original_result;
     }
 
+    // Initialise Rikku and Paine's own Freelancer and Leblanc Goon job data
     public void InitNewJobs() {
-
         InitRikkuFreelancer();
         InitRikkuLeblancGoon();
         InitPaineFreelancer();
@@ -448,42 +259,52 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // abilities
         r_festivalist.dressphere_abilities[0].requirement = 0;
-        r_festivalist.dressphere_abilities[0].ability = 0x302D; // Attack
+        r_festivalist.dressphere_abilities[0].ability = 0x312F; // Attack
 
         r_festivalist.dressphere_abilities[1].requirement = 1;
-        r_festivalist.dressphere_abilities[1].ability = 0x31FB; //
+        r_festivalist.dressphere_abilities[1].ability = 0x31FB; // Cheer
 
         r_festivalist.dressphere_abilities[2].requirement = 1;
-        r_festivalist.dressphere_abilities[2].ability = 0x31F5; //
+        r_festivalist.dressphere_abilities[2].ability = 0x306F; // Delay Attack
 
-        r_festivalist.dressphere_abilities[3].requirement = 0x31F5;
-        r_festivalist.dressphere_abilities[3].ability = 0x31F8; //
+        r_festivalist.dressphere_abilities[3].requirement = 0x306F;
+        r_festivalist.dressphere_abilities[3].ability = 0x3070; // Delay Buster
 
-        r_festivalist.dressphere_abilities[4].requirement = 0x31F8;
-        r_festivalist.dressphere_abilities[4].ability = 0x31FE; //
+        r_festivalist.dressphere_abilities[4].requirement = 1;
+        r_festivalist.dressphere_abilities[4].ability = 0x3176; // Haste
 
-        r_festivalist.dressphere_abilities[5].requirement = 0;
-        r_festivalist.dressphere_abilities[5].ability = 0x3206;
+        r_festivalist.dressphere_abilities[5].requirement = 0x3176;
+        r_festivalist.dressphere_abilities[5].ability = 0x3177; // Hastega
+
         r_festivalist.dressphere_abilities[6].requirement = 1;
-        r_festivalist.dressphere_abilities[6].ability = 0x3207;
-        r_festivalist.dressphere_abilities[7].requirement = 1;
-        r_festivalist.dressphere_abilities[7].ability = 0x3208;
-        r_festivalist.dressphere_abilities[8].requirement = 1;
-        r_festivalist.dressphere_abilities[8].ability = 0x3209;
-        r_festivalist.dressphere_abilities[9].requirement = 0x104;
-        r_festivalist.dressphere_abilities[9].ability = 0x320A;
-        r_festivalist.dressphere_abilities[10].requirement = 0x320A;
-        r_festivalist.dressphere_abilities[10].ability = 0x320B;
-        r_festivalist.dressphere_abilities[11].requirement = 1;
-        r_festivalist.dressphere_abilities[11].ability = 0x805F;
-        r_festivalist.dressphere_abilities[12].requirement = 0x805F;
-        r_festivalist.dressphere_abilities[12].ability = 0x8061;
-        r_festivalist.dressphere_abilities[13].requirement = 1;
-        r_festivalist.dressphere_abilities[13].ability = 0x805C;
-        r_festivalist.dressphere_abilities[14].requirement = 0x805C;
-        r_festivalist.dressphere_abilities[14].ability = 0x8077;
-        r_festivalist.dressphere_abilities[15].requirement = 0x8077;
-        r_festivalist.dressphere_abilities[15].ability = 0x809B;
+        r_festivalist.dressphere_abilities[6].ability = 0x30C7; // Slow
+        
+        r_festivalist.dressphere_abilities[7].requirement = 0x3070;
+        r_festivalist.dressphere_abilities[7].ability = 0x31F5; // Quick Hit
+        
+        r_festivalist.dressphere_abilities[8].requirement = 0;
+        r_festivalist.dressphere_abilities[8].ability = 0x3206; // Spiral Cut
+        
+        r_festivalist.dressphere_abilities[9].requirement = 0x3176;
+        r_festivalist.dressphere_abilities[9].ability = 0x3207; // Slice and Dice
+
+        r_festivalist.dressphere_abilities[10].requirement = 0x3177;
+        r_festivalist.dressphere_abilities[10].ability = 0x3208; // Energy Rain
+
+        r_festivalist.dressphere_abilities[11].requirement = 0x3208;
+        r_festivalist.dressphere_abilities[11].ability = 0x3209; // Blitz Ace
+
+        r_festivalist.dressphere_abilities[12].requirement = 1;
+        r_festivalist.dressphere_abilities[12].ability = 0x8027; // Ghiki L3 -> T. Swordplay+
+        
+        r_festivalist.dressphere_abilities[13].requirement = 0x3207;
+        r_festivalist.dressphere_abilities[13].ability = 0x8003; // Evade and Counter
+        
+        r_festivalist.dressphere_abilities[14].requirement = 1;
+        r_festivalist.dressphere_abilities[14].ability = 0x805F; // Slowproof
+        
+        r_festivalist.dressphere_abilities[15].requirement = 0x805F;
+        r_festivalist.dressphere_abilities[15].ability = 0x8061; // Stopproof
 
         // Write the changes to memory
         *(Job*)h_MsGetRomJob(1, 0x501E, null) = r_festivalist;
@@ -571,42 +392,52 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // abilities
         p_festivalist.dressphere_abilities[0].requirement = 0;
-        p_festivalist.dressphere_abilities[0].ability = 0x302D; // Attack
+        p_festivalist.dressphere_abilities[0].ability = 0x302D; // P. Attack
 
         p_festivalist.dressphere_abilities[1].requirement = 1;
-        p_festivalist.dressphere_abilities[1].ability = 0x31FC; //
+        p_festivalist.dressphere_abilities[1].ability = 0x31FC; // Multi-Cura
 
-        p_festivalist.dressphere_abilities[2].requirement = 1;
-        p_festivalist.dressphere_abilities[2].ability = 0x31F6; //
+        p_festivalist.dressphere_abilities[2].requirement = 0;
+        p_festivalist.dressphere_abilities[2].ability = 0x31F9; // Dark
 
-        p_festivalist.dressphere_abilities[3].requirement = 0x31F6;
-        p_festivalist.dressphere_abilities[3].ability = 0x31F9; //
+        p_festivalist.dressphere_abilities[3].requirement = 0x31F9;
+        p_festivalist.dressphere_abilities[3].ability = 0x31FF; // Darkra
 
-        p_festivalist.dressphere_abilities[4].requirement = 0x31F9;
-        p_festivalist.dressphere_abilities[4].ability = 0x31FF; //
+        p_festivalist.dressphere_abilities[4].requirement = 0x320B;
+        p_festivalist.dressphere_abilities[4].ability = 0x31F6; // Requiem
 
-        p_festivalist.dressphere_abilities[5].requirement = 0;
-        p_festivalist.dressphere_abilities[5].ability = 0x320D;
+        p_festivalist.dressphere_abilities[5].requirement = 1;
+        p_festivalist.dressphere_abilities[5].ability = 0x320D; // Multi-Fira
+
         p_festivalist.dressphere_abilities[6].requirement = 1;
-        p_festivalist.dressphere_abilities[6].ability = 0x320C;
+        p_festivalist.dressphere_abilities[6].ability = 0x320C; // Multi-Blizzara
+        
         p_festivalist.dressphere_abilities[7].requirement = 1;
-        p_festivalist.dressphere_abilities[7].ability = 0x320F;
+        p_festivalist.dressphere_abilities[7].ability = 0x320E; // Multi-Thundara
+        
         p_festivalist.dressphere_abilities[8].requirement = 1;
-        p_festivalist.dressphere_abilities[8].ability = 0x320E;
-        p_festivalist.dressphere_abilities[9].requirement = 0x105;
-        p_festivalist.dressphere_abilities[9].ability = 0x3210;
-        p_festivalist.dressphere_abilities[10].requirement = 0x3210;
-        p_festivalist.dressphere_abilities[10].ability = 0x3211;
-        p_festivalist.dressphere_abilities[11].requirement = 1;
-        p_festivalist.dressphere_abilities[11].ability = 0x805F;
-        p_festivalist.dressphere_abilities[12].requirement = 0x805F;
-        p_festivalist.dressphere_abilities[12].ability = 0x8061;
-        p_festivalist.dressphere_abilities[13].requirement = 0x8061;
-        p_festivalist.dressphere_abilities[13].ability = 0x8078;
+        p_festivalist.dressphere_abilities[8].ability = 0x320F; // Multi-Watera
+        
+        p_festivalist.dressphere_abilities[9].requirement = 0x31FC;
+        p_festivalist.dressphere_abilities[9].ability = 0x3210; // Syphon
+        
+        p_festivalist.dressphere_abilities[10].requirement = 1;
+        p_festivalist.dressphere_abilities[10].ability = 0x3211; // Souleater
+        
+        p_festivalist.dressphere_abilities[11].requirement = 0x3210;
+        p_festivalist.dressphere_abilities[11].ability = 0x320B; // Bubble
+        
+        p_festivalist.dressphere_abilities[12].requirement = 0x3211;
+        p_festivalist.dressphere_abilities[12].ability = 0x320A; // Balance
+        
+        p_festivalist.dressphere_abilities[13].requirement = 1;
+        p_festivalist.dressphere_abilities[13].ability = 0x8077; // SOS Regen
+        
         p_festivalist.dressphere_abilities[14].requirement = 1;
-        p_festivalist.dressphere_abilities[14].ability = 0x8077;
-        p_festivalist.dressphere_abilities[15].requirement = 0x8077;
-        p_festivalist.dressphere_abilities[15].ability = 0x809B;
+        p_festivalist.dressphere_abilities[14].ability = 0x801A; // Sage Lv.2
+        
+        p_festivalist.dressphere_abilities[15].requirement = 0x801A;
+        p_festivalist.dressphere_abilities[15].ability = 0x801B; // Sage Lv.3
 
         // Write the changes to memory
         *(Job*)h_MsGetRomJob(2, 0x501F, null) = p_festivalist;

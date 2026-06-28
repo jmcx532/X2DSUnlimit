@@ -11,9 +11,6 @@ public partial class X2DSUnlimitModule : FhModule
     // P3 is a large number, dont think it's a memory address (chr or party data?) (Seems to point after voicemapper if it is?)
     public void h_F791610(int param_1, int param_2, int param_3)
     {
-        //_logger.Info("Param_1 is: " + param_1.ToString("X"));
-        //_logger.Info("Param_2 is: " + param_2.ToString());
-        //_logger.Info("Param_3 is: " + param_3.ToString());
 
         if (param_1 == 0x25) // on spherechange
         {

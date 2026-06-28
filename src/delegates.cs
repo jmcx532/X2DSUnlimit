@@ -234,6 +234,8 @@ public partial class X2DSUnlimitModule : FhModule
     public delegate int MsGetChr(uint chr_id);
     private readonly FhMethodHandle<MsGetChr> _MsGetChr_handle;//611450
 
+
+    // added C# job name string implementation
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate byte* MsGetSaveChrName(int chr_id);
     private readonly FhMethodHandle<MsGetSaveChrName> _MsGetSaveChrName_handle;//60c4a0
@@ -250,6 +252,10 @@ public partial class X2DSUnlimitModule : FhModule
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int FUN_6083B0(uint param_1);
     private readonly FhMethodHandle<FUN_6083B0> _FUN_6083B0_handle;// 6083B0
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int TOGetFaceIndex2(int param_1, uint param_2);
+    private readonly FhMethodHandle<TOGetFaceIndex2> _TOGetFaceIndex2_handle;// 793190
 
     /*
     // Main Delegate 4
