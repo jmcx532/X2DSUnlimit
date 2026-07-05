@@ -1,4 +1,6 @@
 ﻿
+using static Fahrenheit.Mods.X2DSUnlimit.X2DSUnlimitModule;
+
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
 [FhLoad(FhGameId.FFX2)]
@@ -11,26 +13,43 @@ public partial class X2DSUnlimitModule : FhModule {
     private unsafe Job* paine_freelancer_ptr;
     private unsafe Job* paine_leblancgoon_ptr;
 
+    // Move ability list data into Native alloc - adding new Dresspheres can overwrite data (Blue Bullet)
+    private unsafe DSAbilityListData* ability_list_ptr;
+    private const int ability_list_count = 32;
+
     // Local state / save state
     public static byte   freelancer_quantity = 0;
     public static byte   leblanc_goon_quantity = 0;
-    public static ushort freelancer_ability_learning = 0;
-    public static ushort leblancgoon_ability_learning = 0;
+    public static ushort y_freelancer_ability_learning = 0;
+    public static ushort y_leblancgoon_ability_learning = 0;
+    public static ushort r_freelancer_ability_learning = 0;
+    public static ushort r_leblancgoon_ability_learning = 0;
+    public static ushort p_freelancer_ability_learning = 0;
+    public static ushort p_leblancgoon_ability_learning = 0;
 
     private class X2DSUnlimitState
     {
         public byte   freelancer_quantity          { get; set; }
-        public ushort freelancer_ability_learning  { get; set; }
         public byte   leblanc_goon_quantity        { get; set; }
-        public ushort leblancgoon_ability_learning { get; set; }
+
+        public ushort y_freelancer_ability_learning  { get; set; }
+        public ushort y_leblancgoon_ability_learning { get; set; }
+        public ushort r_freelancer_ability_learning { get; set; }
+        public ushort r_leblancgoon_ability_learning { get; set; }
+        public ushort p_freelancer_ability_learning { get; set; }
+        public ushort p_leblancgoon_ability_learning { get; set; }
 
         public X2DSUnlimitState()
         {
             this.freelancer_quantity = X2DSUnlimitModule.freelancer_quantity;
             this.leblanc_goon_quantity = X2DSUnlimitModule.leblanc_goon_quantity;
 
-            this.freelancer_ability_learning  = X2DSUnlimitModule.freelancer_ability_learning;
-            this.leblancgoon_ability_learning = X2DSUnlimitModule.leblancgoon_ability_learning;
+            this.y_freelancer_ability_learning  = X2DSUnlimitModule.y_freelancer_ability_learning;
+            this.y_leblancgoon_ability_learning = X2DSUnlimitModule.y_leblancgoon_ability_learning;
+            this.r_freelancer_ability_learning = X2DSUnlimitModule.r_freelancer_ability_learning;
+            this.r_leblancgoon_ability_learning = X2DSUnlimitModule.r_leblancgoon_ability_learning;
+            this.p_freelancer_ability_learning = X2DSUnlimitModule.p_freelancer_ability_learning;
+            this.p_leblancgoon_ability_learning = X2DSUnlimitModule.p_leblancgoon_ability_learning;
         }
     }
 
@@ -39,15 +58,15 @@ public partial class X2DSUnlimitModule : FhModule {
     /// Freelancer/Leblanc Goon ID's appended to mod copt of DAT_00D63e78 table (ffx-2.exe + 0x963e78)
     /// TOMsJobAbilityWindow+ and other functions (many)
     /// </summary>
-    private static readonly ushort[] CustomTOMSJAW_DS_Table =
+    private static readonly ushort[] CustomTOMenuStartJobAbilityWindow_DS_Table =
 {
-    0x5000, 0x5001, 0x5002, 0x5003, 0x5004, 0x5005,
-    0x5006, 0x5007, 0x5008, 0x5009, 0x500A,
-    0x500B, 0x500C, 0x500D, 0x500E, 0x5018,
-    0x5019, 0x501a, 0x501b, 0x501d, 0x501e,
-    0x501f, 0x501c, 0x500f, 0x5010, 0x5011,
-    0x5012, 0x5013, 0x5014, 0x5015, 0x5016,
-    0x5017, 0x5020, 0x5021
+    0x5000, 0x5001, 0x5002, 0x5003, 0x5004,
+    0x5005, 0x5006, 0x5007, 0x5008, 0x5009, 
+    0x500A, 0x500B, 0x500C, 0x500D, 0x500E, 
+    0x5018, 0x5019, 0x501a, 0x501b, 0x501d, 
+    0x501e, 0x501f, 0x501c, 0x500f, 0x5010, 
+    0x5011, 0x5012, 0x5013, 0x5014, 0x5015, 
+    0x5016, 0x5017, 0x5020, 0x5021
 };
 
     //replaces lookup table at: ffx-2.exe + cc36cc, used by the kyGetJobNum series of functions and kyGetUsedPoint ONLY.
@@ -102,7 +121,19 @@ public partial class X2DSUnlimitModule : FhModule {
         _TOMenuMakeJobAbilityList_handle = new FhMethodHandle<TOMenuMakeJobAbilityList>(this, "FFX-2.exe", 0x7788d0 - addr_offset, h_TOMenuMakeJobAbilityList);
         _TOMenuStartJobAbilityWindow_handle = new FhMethodHandle<TOMenuStartJobAbilityWindow>(this, "FFX-2.exe", 0x778f70 - addr_offset, h_TOMenuStartJobAbilityWindow);
 
-        //_FUN_778160_handle = new FhMethodHandle<FUN_778160>(this, "FFX-2.exe", 0x778160 - addr_offset, h_FUN_778160);// ability, ap rendering
+        // 16x Ability list - Rendering function
+        _FUN_778160_handle = new FhMethodHandle<FUN_778160>(this, "FFX-2.exe", 0x778160 - addr_offset, h_FUN_778160);// ability, ap rendering
+        // 16x Ability list - Make Freelancer and Leblanc Goon functional
+        _FUN_776EC0_handle = new FhMethodHandle<FUN_776EC0>(this, "FFX-2.exe", 0x776EC0 - addr_offset, h_FUN_776EC0);
+        _FUN_777270_handle = new FhMethodHandle<FUN_777270>(this, "FFX-2.exe", 0x777270 - addr_offset, h_FUN_777270);
+
+        // FUN_777270 sub functions, 16x ability list functionality
+        _TOMenuSetSaveLearn_handle = new FhMethodHandle<TOMenuSetSaveLearn>(this, "FFX-2.exe", 0x778f40 - addr_offset, h_TOMenuSetSaveLearn);
+        _TOMenuSetMacroCommandType_handle = new FhMethodHandle<TOMenuSetMacroCommandType>(this, "FFX-2.exe", 0x796330 - addr_offset, h_TOMenuSetMacroCommandType);
+        _TOBtlGetComName_handle = new FhMethodHandle<TOBtlGetComName>(this, "FFX-2.exe", 0x759fd0 - addr_offset, h_TOBtlGetComName);
+        _TOMenuSetMacroCommandValue_handle = new FhMethodHandle<TOMenuSetMacroCommandValue>(this, "FFX-2.exe", 0x796360 - addr_offset, h_TOMenuSetMacroCommandValue);
+        _TOGetMenuText_handle = new FhMethodHandle<TOGetMenuText>(this, "FFX-2.exe", 0x779250 - addr_offset, h_TOGetMenuText);
+        _SndSepPlaySimple_handle = new FhMethodHandle<SndSepPlaySimple>(this, "FFX-2.exe", 0x744760 - addr_offset, h_SndSepPlaySimple);
 
         //custom ability menu handles
         _MsGetSaveLearn_handle = new FhMethodHandle<MsGetSaveLearn>(this, "FFX-2.exe", 0x60ca70 - addr_offset, h_MsGetSaveLearn);
@@ -134,8 +165,8 @@ public partial class X2DSUnlimitModule : FhModule {
         //AltChr handles
         _MsGetChrID_handle = new FhMethodHandle<MsGetChrID>(this, "FFX-2.exe", 0x624f90 - addr_offset, h_MsGetChrID);
         _MsSetRamMotionChrData_handle = new FhMethodHandle<MsSetRamMotionChrData>(this, "FFX-2.exe", 0x627a20 - addr_offset, h_MsSetRamMotionChrData);
-        _beta_fx_handle = new FhMethodHandle<beta_fx>(this, "FFX-2.exe", 0x62ab30 - addr_offset, h_beta_fx);
-        _charlie_fx_handle = new FhMethodHandle<charlie_fx>(this, "FFX-2.exe", 0x534a70 - addr_offset, h_charlie_fx);
+        _FUN_62AB30_handle = new FhMethodHandle<FUN_62AB30>(this, "FFX-2.exe", 0x62ab30 - addr_offset, h_FUN_62AB30);
+        _FUN_534A70_handle = new FhMethodHandle<FUN_534A70>(this, "FFX-2.exe", 0x534a70 - addr_offset, h_FUN_534A70);
         _MsGetChr_handle = new FhMethodHandle<MsGetChr>(this, "FFX-2.exe", 0x611450 - addr_offset, h_MsGetChr);
 
         //for reading/writing character names
@@ -147,6 +178,11 @@ public partial class X2DSUnlimitModule : FhModule {
         // face portraits
         _TOGetFaceIndex2_handle = new FhMethodHandle<TOGetFaceIndex2>(this, "FFX-2.exe", 0x793190 - addr_offset, h_TOGetFaceIndex2);
 
+        // writes battle Chr pointer, used to retrieve system_01 pointer separately -> sound.cs
+        _MsBtlChrGetMem_handle = new FhMethodHandle<MsBtlChrGetMem>(this, "FFX-2.exe", 0x60fe10 - addr_offset, h_MsBtlChrGetMem);
+        // overwrite voiceline integers in system_01.bin - largely for commands
+        _TOCtrlATBChr_handle = new FhMethodHandle<TOCtrlATBChr>(this, "FFX-2.exe", 0x75e2c0 - addr_offset, h_TOCtrlATBChr);
+
         #endregion MethodHandles
 
         // malloc for C# defined jobs and initialisation
@@ -156,6 +192,8 @@ public partial class X2DSUnlimitModule : FhModule {
         paine_leblancgoon_ptr = (Job*)NativeMemory.AllocZeroed((nuint)sizeof(Job));
         InitNewJobs();
 
+        // malloc region for Ability List data - 16x abilites window
+        ability_list_ptr = (DSAbilityListData*)NativeMemory.AllocZeroed((nuint)(sizeof(DSAbilityListData) * ability_list_count));
     }
 
     public int h_MsGetChr(uint chr_id) {
@@ -171,6 +209,7 @@ public partial class X2DSUnlimitModule : FhModule {
         return _MsBtlPlayerSaveNumCheck_handle.orig_fptr.Invoke(p1);
     }
 
+    // table this references has entries for 0x5020 and 0x5021 for FL/LG - would need to expand for more dresspheres
     public ushort h_MsGetJobNumBasic(uint p1)
     {
         return _MsGetJobNumBasic_handle.orig_fptr.Invoke(p1);
@@ -223,17 +262,17 @@ public partial class X2DSUnlimitModule : FhModule {
     }
 
     // handle FL/LG getting ability to be learned
-    public unsafe ushort h_MsGetSaveLearn(uint param_1, uint param_2)
+    public unsafe ushort h_MsGetSaveLearn(uint chr_id, uint job_id)
     {
 
         uint chr_num;
         int is_plyChr;
 
-        chr_num = h_MsGetChrNum(param_1);
+        chr_num = h_MsGetChrNum(chr_id);
         is_plyChr = h_MsBtlPlayerSaveNumCheck((byte)chr_num);
         if (is_plyChr != 0)
         {
-            int job_num = h_MsGetJobNumBasic(param_2);
+            int job_num = h_MsGetJobNumBasic(job_id);
             if (job_num < 0x1e) // Vanilla
             {
                 ushort* DAT_00e05de0 = FhUtil.ptr_at<ushort>(0xa05de0);
@@ -244,12 +283,27 @@ public partial class X2DSUnlimitModule : FhModule {
             {
                 if (job_num == 0x20)
                 {
-                    return freelancer_ability_learning;
+                    switch (chr_id) {
+                        case 0:
+                            return y_freelancer_ability_learning;
+                        case 1:
+                            return r_freelancer_ability_learning;
+                        case 2:
+                            return p_freelancer_ability_learning;
+                    }
+
                 }
 
                 if (job_num == 0x21)
                 {
-                    return leblancgoon_ability_learning;
+                    switch (chr_id) {
+                        case 0:
+                            return y_leblancgoon_ability_learning;
+                        case 1:
+                            return r_leblancgoon_ability_learning;
+                        case 2:
+                            return p_leblancgoon_ability_learning;
+                    }
                 }
             }
         }
@@ -280,14 +334,32 @@ public partial class X2DSUnlimitModule : FhModule {
             {
                 if (job_num == 0x20)
                 {
-                    freelancer_ability_learning = ability_id;
-                    return -1;
+                    switch (chr_id) {
+                        case 0:
+                            y_freelancer_ability_learning = ability_id;
+                            return -1;
+                        case 1:
+                            r_freelancer_ability_learning = ability_id;
+                            return -1;
+                        case 2:
+                            p_freelancer_ability_learning = ability_id;
+                            return -1;
+                    }
                 }
 
                 if (job_num == 0x21)
                 {
-                    leblancgoon_ability_learning = ability_id;
-                    return -1;
+                    switch (chr_id) {
+                        case 0:
+                            y_leblancgoon_ability_learning = ability_id;
+                            return -1;
+                        case 1:
+                            r_leblancgoon_ability_learning = ability_id;
+                            return -1;
+                        case 2:
+                            p_leblancgoon_ability_learning = ability_id;
+                            return -1;
+                    }
                 }
             }
         }
@@ -467,26 +539,43 @@ public partial class X2DSUnlimitModule : FhModule {
             && _MsGetChrID_handle.hook()
             && _MsSetRamMotionChrData_handle.hook()
             && _MsGetChr_handle.hook()
-            && _beta_fx_handle.hook()
-            && _charlie_fx_handle.hook()
+            && _FUN_62AB30_handle.hook()
+            && _FUN_534A70_handle.hook()
             && _MsGetSaveChrName_handle.hook()
 
-            && _TOGetFaceIndex2_handle.hook();
+            && _TOGetFaceIndex2_handle.hook()
 
-            //&& _FUN_778160_handle.hook();
+            && _MsBtlChrGetMem_handle.hook()
+            && _TOCtrlATBChr_handle.hook()
+
+            && _FUN_778160_handle.hook()
+            && _FUN_776EC0_handle.hook()
+            && _FUN_777270_handle.hook()
+            && _TOMenuSetSaveLearn_handle.hook()
+            && _TOMenuSetMacroCommandType_handle.hook()
+            && _TOBtlGetComName_handle.hook()
+            && _TOMenuSetMacroCommandValue_handle.hook()
+            && _TOGetMenuText_handle.hook()
+            && _SndSepPlaySimple_handle.hook();
     }
 
     public override void load_local_state(FileStream? local_state_file, FhLocalStateInfo local_state_info) 
     {
+        
         var loaded_state = JsonSerializer.Deserialize<X2DSUnlimitState>(local_state_file);
 
         if (loaded_state != null)
         {
             freelancer_quantity = loaded_state.freelancer_quantity;
-            freelancer_ability_learning = loaded_state.freelancer_ability_learning;
-
             leblanc_goon_quantity = loaded_state.leblanc_goon_quantity;
-            leblancgoon_ability_learning = loaded_state.leblancgoon_ability_learning;
+
+            y_freelancer_ability_learning = loaded_state.y_freelancer_ability_learning;
+            r_freelancer_ability_learning = loaded_state.r_freelancer_ability_learning;
+            p_freelancer_ability_learning = loaded_state.p_freelancer_ability_learning;
+
+            y_leblancgoon_ability_learning = loaded_state.y_leblancgoon_ability_learning;
+            r_leblancgoon_ability_learning = loaded_state.r_leblancgoon_ability_learning;
+            p_leblancgoon_ability_learning = loaded_state.p_leblancgoon_ability_learning;
         }
     }
     public override void save_local_state(FileStream  local_state_file)

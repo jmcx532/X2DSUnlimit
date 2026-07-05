@@ -11,42 +11,6 @@ public partial class X2DSUnlimitModule : FhModule
      */
 
 
-    //used for rendering - fetch data to fill, and update underlying data, not these directly?
-    // FFX-2.exe + dbb200, dbb204
-    // Populated by TOMenuMakeJobAbilityList
-    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x10)]
-    public struct AbilityListDataAbility
-    {
-        [FieldOffset(0x00)] public bool is_visible; // -3
-        [FieldOffset(0x01)] public bool b2; // -2
-        [FieldOffset(0x02)] public bool is_mastered; // -1
-        [FieldOffset(0x03)] public bool is_selected; // 0
-        [FieldOffset(0x04)] public uint ability_id;// e.g 0x302C or 0x8002, command/a_ability id // + 1
-        [FieldOffset(0x08)] public uint current_ap; // + 5
-        [FieldOffset(0x0C)] public uint ap_needed; // + 9
-
-    }
-
-    [InlineArray(16)]
-    public struct AbilityListDataAbilityArray
-    {
-        private AbilityListDataAbility _element0;
-    }
-
-    //used for rendering - fetch data to fill, and update underlying data, not these directly?
-    // Populated by TOMenuMakeJobAbilityList, 0x110 per dressphere
-    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x110)]
-    public struct AbilityListData
-    {
-        [FieldOffset(0x00)] public int ds_id;
-        [FieldOffset(0x04)] public int percentage;
-        [FieldOffset(0x08)] public int i0;
-        [FieldOffset(0x0C)] public AbilityListDataAbilityArray Abilities;
-        [FieldOffset(0x10C)] public int i2;
-
-    }
-
-    //function to read character's name string, stored in BattleUnit - keep for debugging
     public unsafe string ReadAbilityName(uint ability_id)
     {
         if (ability_id == 0)
@@ -126,9 +90,9 @@ public partial class X2DSUnlimitModule : FhModule
         byte job_number = FhUtil.get_at<byte>(0x12c0266);// the dressphere ID number which is being viewed / was last viewed.
         //byte menu_chr_id = FhUtil.get_at<byte>(0x9f6d80);
 
-        AbilityListData* ability_list_base = FhUtil.ptr_at<AbilityListData>(0xdbb204);
+        DSAbilityListData* ability_list_base = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
 
-        AbilityListData current_ability_list = ability_list_base[job_number];
+        DSAbilityListData current_ability_list = ability_list_base[job_number];
 
         if (show_job_ability_list == 1)
         {
@@ -172,9 +136,9 @@ public partial class X2DSUnlimitModule : FhModule
 
                         //string visible_text_odd = current_ability_list.Abilities[row - 1].ability_id.ToString("X");
                         string vt = ReadAbilityName(current_ability_list.Abilities[row - 1].ability_id);
-                        string ap = " (" + current_ability_list.Abilities[row - 1].current_ap.ToString() + " / " + current_ability_list.Abilities[row - 1].ap_needed.ToString();
+                        string ap = " (" + current_ability_list.Abilities[row - 1].ap_current.ToString() + " / " + current_ability_list.Abilities[row - 1].ap_needed.ToString();
                         
-                        if(current_ability_list.Abilities[row - 1].current_ap >= current_ability_list.Abilities[row - 1].ap_needed
+                        if(current_ability_list.Abilities[row - 1].ap_current >= current_ability_list.Abilities[row - 1].ap_needed
                             || current_ability_list.Abilities[row-1].is_mastered
                           )
                         {
@@ -217,7 +181,7 @@ public partial class X2DSUnlimitModule : FhModule
                         string vt2 = ReadAbilityName(current_ability_list.Abilities[row].ability_id);
                         //string visible_text_even = current_ability_list.Abilities[row].ability_id.ToString("X");
 
-                        if (current_ability_list.Abilities[row].current_ap >= current_ability_list.Abilities[row].ap_needed
+                        if (current_ability_list.Abilities[row].ap_current >= current_ability_list.Abilities[row].ap_needed
                             || current_ability_list.Abilities[row].is_mastered
                            )
                         {
@@ -226,7 +190,7 @@ public partial class X2DSUnlimitModule : FhModule
                         }
                         else
                         {
-                            ap = " (" + current_ability_list.Abilities[row].current_ap.ToString() + " / " + current_ability_list.Abilities[row].ap_needed.ToString();
+                            ap = " (" + current_ability_list.Abilities[row].ap_current.ToString() + " / " + current_ability_list.Abilities[row].ap_needed.ToString();
                         }
 
 

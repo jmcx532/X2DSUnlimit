@@ -2,6 +2,7 @@
 
 /// <summary>
 /// Each dressphere has motion data present in system_01.bin, however, there is none present for Freelancer and Leblanc Goon.
+/// This data originally can be found in system_01.bin at 0x3EB6C. It consist of block of 56 bytes representing ChrRamMotionData
 /// Here you can set motion data for Freelancer and Leblanc Goon as required.
 /// </summary>
 

@@ -11,15 +11,29 @@ public partial class X2DSUnlimitModule : FhModule {
         return original_result;
         */
 
-        if (chr_id == 0 && job_id == 0x501D) {
+        // Freelancer Replacements
+        if (chr_id == 0 && job_id == 0x5020) {
             return 261;
         }
 
-        if (chr_id == 1 && job_id == 0x501E) {
+        if (chr_id == 1 && job_id == 0x5020) {
             return 263;
         }
 
-        if (chr_id == 2 && job_id == 0x501F) {
+        if (chr_id == 2 && job_id == 0x5020) {
+            return 264;
+        }
+
+        // Leblanc Goon Replacements
+        if (chr_id == 0 && job_id == 0x5021) {
+            return 261;
+        }
+
+        if (chr_id == 1 && job_id == 0x5021) {
+            return 263;
+        }
+
+        if (chr_id == 2 && job_id == 0x5021) {
             return 264;
         }
 

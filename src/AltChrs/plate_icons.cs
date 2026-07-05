@@ -12,12 +12,12 @@ public partial class X2DSUnlimitModule : FhModule {
         /* Icon map (param_3_
      * 1,2 -> Red/Green Gate
      * 3,4
-     * 5,6 -> ??,, Shiny Grey orb (1: gate background orb, 2:  used as bg for some Dressspheres) Use standalone for LG/FL?
+     * 5,6 -> (5: gate background orb, 6: used as bg for some Dressspheres)
      * 7,14 ->, Gunner/Songstress
      * 8, -> gun mage
      * 21, 22 -> Psychic/Festivalist
      * 23, 24, 25 -> Floral Fallal, Machina Maw, Full Throttle
-     * 26, 27 -> greyORBluish flash/pulsing, Yellow flash/pulsing
+     * 26, 27 -> Blueflash/pulsing, Yellow flash/pulsing
      * 28,29,30 -> nope
      * 99 -> Full Throttle
      */

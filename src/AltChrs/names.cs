@@ -45,10 +45,7 @@ public partial class X2DSUnlimitModule : FhModule {
     private void HandleCustomCharacterName(uint chr_id, uint job_id) {
         switch (chr_id) {
             case 0:
-                if (job_id == 0x501d) {
-                    WriteChrName(CharName.Kimahri, 0);
-                }
-                else if (job_id == 0x5020) {
+                if (job_id == 0x5020) {
                     WriteChrName(CharName.Kimahri, 0);
                 }
                 else if (job_id == 0x5021) {
@@ -60,10 +57,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 break;
 
             case 1:
-                if (job_id == 0x501E) {
-                    WriteChrName(CharName.Tidus, 1);
-                }
-                else if (job_id == 0x5020) {
+                if (job_id == 0x5020) {
                     WriteChrName(CharName.Tidus, 1);
                 }
                 else if (job_id == 0x5021) {
@@ -75,10 +69,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 break;
 
             case 2:
-                if (job_id == 0x501F) {
-                    WriteChrName(CharName.Seymour, 2);
-                }
-                else if (job_id == 0x5020) {
+                 if (job_id == 0x5020) {
                     WriteChrName(CharName.Seymour, 2);
                 }
                 else if (job_id == 0x5021) {

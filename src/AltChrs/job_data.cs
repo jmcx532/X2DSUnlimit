@@ -16,19 +16,16 @@ public partial class X2DSUnlimitModule : FhModule {
     /// <summary>
     /// Overwrites Job entries in memory after job.bin has been loaded.
     /// </summary>
-    bool F6083B0_runOnce = false;
+    bool FUN_6083B0_runOnce = false;
     //param_1 is a custom excel bin number, 8 is Job.bin
     public int h_FUN_6083B0(uint param_1) {
         int original_result = _FUN_6083B0_handle.orig_fptr.Invoke(param_1);
 
-        if (param_1 == 8 && !F6083B0_runOnce) {
-            F6083B0_runOnce = true;
+        if (param_1 == 8 && !FUN_6083B0_runOnce) {
+            FUN_6083B0_runOnce = true;
             InitYunaFreelancer();
             InitYunaLeblancGoon();
             
-            InitYunaFestivalist();
-            InitRikkuFestivalist();
-            InitPaineFestivalist();
         }
 
         return original_result;
@@ -42,416 +39,21 @@ public partial class X2DSUnlimitModule : FhModule {
         InitPaineLeblancGoon();
     }
 
-    public unsafe void InitYunaFestivalist() {
 
-        // read and get copy of Job struct
-        Job y_festivalist = *(Job*)h_MsGetRomJob(0, 0x501d, null);
-
-        y_festivalist.name_offset.text_offset = 2345;
-        y_festivalist.help_offset.text_offset = 2357;
-        y_festivalist.user = 0;
-        y_festivalist.dressphere_menu_ordering = 15;
-        y_festivalist.icon = 99;
-        y_festivalist.berserk_action = 0x302D;
-
-        // stat growth
-        y_festivalist.growth_hp.linear_mult = 38;
-        y_festivalist.growth_hp.quadratic_div = 133;
-        y_festivalist.growth_hp.base_amount = 78;
-
-        y_festivalist.growth_mp.linear_mult = 26;
-        y_festivalist.growth_mp.quadratic_div = 180;
-        y_festivalist.growth_mp.base_amount = 18;
-
-        y_festivalist.growth_strength.linear_mult = 20;
-        y_festivalist.growth_strength.linear_div = 10;
-        y_festivalist.growth_strength.base_amount = 15;
-        y_festivalist.growth_strength.quadratic_div_a = 12;
-        y_festivalist.growth_strength.quadratic_div_b = 1;
-
-        y_festivalist.growth_defense.linear_mult = 3;
-        y_festivalist.growth_defense.linear_div = 200;
-        y_festivalist.growth_defense.base_amount = 32;
-        y_festivalist.growth_defense.quadratic_div_a = 200;
-        y_festivalist.growth_defense.quadratic_div_b = 2;
-
-        y_festivalist.growth_magic.linear_mult = 6;
-        y_festivalist.growth_magic.linear_div = 4;
-        y_festivalist.growth_magic.base_amount = 18;
-        y_festivalist.growth_magic.quadratic_div_a = 200;
-        y_festivalist.growth_magic.quadratic_div_b = 2;
-
-        y_festivalist.growth_magic_defense.linear_mult = 3;
-        y_festivalist.growth_magic_defense.linear_div = 16;
-        y_festivalist.growth_magic_defense.base_amount = 38;
-        y_festivalist.growth_magic_defense.quadratic_div_a = 200;
-        y_festivalist.growth_magic_defense.quadratic_div_b = 2;
-
-        y_festivalist.growth_agility.linear_mult = 0;
-        y_festivalist.growth_agility.linear_div = 17;
-        y_festivalist.growth_agility.base_amount = 54;
-        y_festivalist.growth_agility.quadratic_div_a = 200;
-        y_festivalist.growth_agility.quadratic_div_b = 4;
-
-        y_festivalist.growth_evasion.linear_mult = 0;
-        y_festivalist.growth_evasion.linear_div = 20;
-        y_festivalist.growth_evasion.base_amount = 10;
-        y_festivalist.growth_evasion.quadratic_div_a = 200;
-        y_festivalist.growth_evasion.quadratic_div_b = 4;
-
-        y_festivalist.growth_accuracy.linear_mult = 0;
-        y_festivalist.growth_accuracy.linear_div = 17;
-        y_festivalist.growth_accuracy.base_amount = 120;
-        y_festivalist.growth_accuracy.quadratic_div_a = 200;
-        y_festivalist.growth_accuracy.quadratic_div_b = 4;
-
-        y_festivalist.growth_luck.linear_mult = 0;
-        y_festivalist.growth_luck.linear_div = 22;
-        y_festivalist.growth_luck.base_amount = 13;
-        y_festivalist.growth_luck.quadratic_div_a = 200;
-        y_festivalist.growth_luck.quadratic_div_b = 4;
-
-
-        //weapon and armor
-        y_festivalist.yuna_weapon_data[0].weapon_model = 4410;
-        y_festivalist.yuna_weapon_data[0].weapon_position = 14;
-        y_festivalist.yuna_weapon_data[1].weapon_model = 0;
-        y_festivalist.yuna_weapon_data[1].weapon_position = 0;
-        y_festivalist.yuna_weapon_data[2].weapon_model = 0;
-        y_festivalist.yuna_weapon_data[2].weapon_position = 0;
-        y_festivalist.yuna_weapon_data[3].weapon_model = 0;
-        y_festivalist.yuna_weapon_data[3].weapon_position = 0;
-
-
-        // abilities
-        y_festivalist.dressphere_abilities[0].requirement = 0;
-        y_festivalist.dressphere_abilities[0].ability = 0x302D; // Attack
-
-        y_festivalist.dressphere_abilities[1].requirement = 1;
-        y_festivalist.dressphere_abilities[1].ability = 0x31FA; // Matra Magic
-        
-        y_festivalist.dressphere_abilities[2].requirement = 0;
-        y_festivalist.dressphere_abilities[2].ability = 0x31F4; // Jump
-        
-        y_festivalist.dressphere_abilities[3].requirement = 0x31F4;
-        y_festivalist.dressphere_abilities[3].ability = 0x3200; // High Jump
-        
-        y_festivalist.dressphere_abilities[4].requirement = 0x31FA;
-        y_festivalist.dressphere_abilities[4].ability = 0x31F7; // Electro Burst
-        
-        y_festivalist.dressphere_abilities[5].requirement = 0x31F7;
-        y_festivalist.dressphere_abilities[5].ability = 0x31FD; // Aqualung
-        
-        y_festivalist.dressphere_abilities[6].requirement = 0x31FD;
-        y_festivalist.dressphere_abilities[6].ability = 0x3201; // Avalanche
-        
-        y_festivalist.dressphere_abilities[7].requirement = 1;
-        y_festivalist.dressphere_abilities[7].ability = 0x3202; // Enrage
-        
-        y_festivalist.dressphere_abilities[8].requirement = 0;
-        y_festivalist.dressphere_abilities[8].ability = 0x3203; // Lancet
-        
-        y_festivalist.dressphere_abilities[9].requirement = 0x3202;
-        y_festivalist.dressphere_abilities[9].ability = 0x3204; // Nova Strike
-        
-        y_festivalist.dressphere_abilities[10].requirement = 0x3204; 
-        y_festivalist.dressphere_abilities[10].ability = 0x3205; //  Supernova
-        
-        y_festivalist.dressphere_abilities[11].requirement = 1;
-        y_festivalist.dressphere_abilities[11].ability = 0x3212; // White Wind
-        
-        y_festivalist.dressphere_abilities[12].requirement = 0x3212;
-        y_festivalist.dressphere_abilities[12].ability = 0x3213; // Mighty Guard
-        
-        y_festivalist.dressphere_abilities[13].requirement = 1;
-        y_festivalist.dressphere_abilities[13].ability = 0x805C; // Pointlessproof
-        
-        y_festivalist.dressphere_abilities[14].requirement = 0x805c;
-        y_festivalist.dressphere_abilities[14].ability = 0x801A; // Sage Lv.2
-        
-        y_festivalist.dressphere_abilities[15].requirement = 0x801A;
-        y_festivalist.dressphere_abilities[15].ability = 0x801B; // Sage Lv.3
-
-        // Write the changes to memory
-        *(Job*)h_MsGetRomJob(0, 0x501d, null) = y_festivalist;
-    }
-
-
-    public unsafe void InitRikkuFestivalist() {
-        // read and get copy of Job struct
-        Job r_festivalist = *(Job*)h_MsGetRomJob(1, 0x501E, null);
-
-        r_festivalist.name_offset.text_offset = 2345;
-        r_festivalist.help_offset.text_offset = 2357;
-        r_festivalist.user = 1;
-        r_festivalist.dressphere_menu_ordering = 15;
-        r_festivalist.icon = 99;
-        r_festivalist.berserk_action = 0x302D;
-
-        // stat growth
-        r_festivalist.growth_hp.linear_mult = 38;
-        r_festivalist.growth_hp.quadratic_div = 133;
-        r_festivalist.growth_hp.base_amount = 78;
-
-        r_festivalist.growth_mp.linear_mult = 26;
-        r_festivalist.growth_mp.quadratic_div = 180;
-        r_festivalist.growth_mp.base_amount = 18;
-
-        r_festivalist.growth_strength.linear_mult = 20;
-        r_festivalist.growth_strength.linear_div = 10;
-        r_festivalist.growth_strength.base_amount = 15;
-        r_festivalist.growth_strength.quadratic_div_a = 12;
-        r_festivalist.growth_strength.quadratic_div_b = 1;
-
-        r_festivalist.growth_defense.linear_mult = 3;
-        r_festivalist.growth_defense.linear_div = 200;
-        r_festivalist.growth_defense.base_amount = 32;
-        r_festivalist.growth_defense.quadratic_div_a = 200;
-        r_festivalist.growth_defense.quadratic_div_b = 2;
-
-        r_festivalist.growth_magic.linear_mult = 6;
-        r_festivalist.growth_magic.linear_div = 4;
-        r_festivalist.growth_magic.base_amount = 18;
-        r_festivalist.growth_magic.quadratic_div_a = 200;
-        r_festivalist.growth_magic.quadratic_div_b = 2;
-
-        r_festivalist.growth_magic_defense.linear_mult = 3;
-        r_festivalist.growth_magic_defense.linear_div = 16;
-        r_festivalist.growth_magic_defense.base_amount = 38;
-        r_festivalist.growth_magic_defense.quadratic_div_a = 200;
-        r_festivalist.growth_magic_defense.quadratic_div_b = 2;
-
-        r_festivalist.growth_agility.linear_mult = 0;
-        r_festivalist.growth_agility.linear_div = 17;
-        r_festivalist.growth_agility.base_amount = 54;
-        r_festivalist.growth_agility.quadratic_div_a = 200;
-        r_festivalist.growth_agility.quadratic_div_b = 4;
-
-        r_festivalist.growth_evasion.linear_mult = 0;
-        r_festivalist.growth_evasion.linear_div = 20;
-        r_festivalist.growth_evasion.base_amount = 10;
-        r_festivalist.growth_evasion.quadratic_div_a = 200;
-        r_festivalist.growth_evasion.quadratic_div_b = 4;
-
-        r_festivalist.growth_accuracy.linear_mult = 0;
-        r_festivalist.growth_accuracy.linear_div = 17;
-        r_festivalist.growth_accuracy.base_amount = 120;
-        r_festivalist.growth_accuracy.quadratic_div_a = 200;
-        r_festivalist.growth_accuracy.quadratic_div_b = 4;
-
-        r_festivalist.growth_luck.linear_mult = 0;
-        r_festivalist.growth_luck.linear_div = 22;
-        r_festivalist.growth_luck.base_amount = 13;
-        r_festivalist.growth_luck.quadratic_div_a = 200;
-        r_festivalist.growth_luck.quadratic_div_b = 4;
-
-
-        //weapon and armor
-        r_festivalist.rikku_weapon_data[0].weapon_model = 0x113e;
-        r_festivalist.rikku_weapon_data[0].weapon_position = 5;
-        r_festivalist.rikku_weapon_data[1].weapon_model = 0;
-        r_festivalist.rikku_weapon_data[1].weapon_position = 0;
-        r_festivalist.rikku_weapon_data[2].weapon_model = 0;
-        r_festivalist.rikku_weapon_data[2].weapon_position = 0;
-        r_festivalist.rikku_weapon_data[3].weapon_model = 0;
-        r_festivalist.rikku_weapon_data[3].weapon_position = 0;
-
-
-        // abilities
-        r_festivalist.dressphere_abilities[0].requirement = 0;
-        r_festivalist.dressphere_abilities[0].ability = 0x312F; // Attack
-
-        r_festivalist.dressphere_abilities[1].requirement = 1;
-        r_festivalist.dressphere_abilities[1].ability = 0x31FB; // Cheer
-
-        r_festivalist.dressphere_abilities[2].requirement = 1;
-        r_festivalist.dressphere_abilities[2].ability = 0x306F; // Delay Attack
-
-        r_festivalist.dressphere_abilities[3].requirement = 0x306F;
-        r_festivalist.dressphere_abilities[3].ability = 0x3070; // Delay Buster
-
-        r_festivalist.dressphere_abilities[4].requirement = 1;
-        r_festivalist.dressphere_abilities[4].ability = 0x3176; // Haste
-
-        r_festivalist.dressphere_abilities[5].requirement = 0x3176;
-        r_festivalist.dressphere_abilities[5].ability = 0x3177; // Hastega
-
-        r_festivalist.dressphere_abilities[6].requirement = 1;
-        r_festivalist.dressphere_abilities[6].ability = 0x30C7; // Slow
-        
-        r_festivalist.dressphere_abilities[7].requirement = 0x3070;
-        r_festivalist.dressphere_abilities[7].ability = 0x31F5; // Quick Hit
-        
-        r_festivalist.dressphere_abilities[8].requirement = 0;
-        r_festivalist.dressphere_abilities[8].ability = 0x3206; // Spiral Cut
-        
-        r_festivalist.dressphere_abilities[9].requirement = 0x3176;
-        r_festivalist.dressphere_abilities[9].ability = 0x3207; // Slice and Dice
-
-        r_festivalist.dressphere_abilities[10].requirement = 0x3177;
-        r_festivalist.dressphere_abilities[10].ability = 0x3208; // Energy Rain
-
-        r_festivalist.dressphere_abilities[11].requirement = 0x3208;
-        r_festivalist.dressphere_abilities[11].ability = 0x3209; // Blitz Ace
-
-        r_festivalist.dressphere_abilities[12].requirement = 1;
-        r_festivalist.dressphere_abilities[12].ability = 0x8027; // Ghiki L3 -> T. Swordplay+
-        
-        r_festivalist.dressphere_abilities[13].requirement = 0x3207;
-        r_festivalist.dressphere_abilities[13].ability = 0x8003; // Evade and Counter
-        
-        r_festivalist.dressphere_abilities[14].requirement = 1;
-        r_festivalist.dressphere_abilities[14].ability = 0x805F; // Slowproof
-        
-        r_festivalist.dressphere_abilities[15].requirement = 0x805F;
-        r_festivalist.dressphere_abilities[15].ability = 0x8061; // Stopproof
-
-        // Write the changes to memory
-        *(Job*)h_MsGetRomJob(1, 0x501E, null) = r_festivalist;
-    }
-
-    public unsafe void InitPaineFestivalist() {
-        // read and get copy of Job struct
-        Job p_festivalist = *(Job*)h_MsGetRomJob(2, 0x501F, null);
-
-        p_festivalist.name_offset.text_offset = 2345;
-        p_festivalist.help_offset.text_offset = 2357;
-        p_festivalist.user = 2;
-        p_festivalist.dressphere_menu_ordering = 15;
-        p_festivalist.icon = 99;
-        p_festivalist.berserk_action = 0x302D;
-
-        // stat growth
-        p_festivalist.growth_hp.linear_mult = 38;
-        p_festivalist.growth_hp.quadratic_div = 133;
-        p_festivalist.growth_hp.base_amount = 78;
-
-        p_festivalist.growth_mp.linear_mult = 26;
-        p_festivalist.growth_mp.quadratic_div = 180;
-        p_festivalist.growth_mp.base_amount = 18;
-
-        p_festivalist.growth_strength.linear_mult = 20;
-        p_festivalist.growth_strength.linear_div = 10;
-        p_festivalist.growth_strength.base_amount = 15;
-        p_festivalist.growth_strength.quadratic_div_a = 12;
-        p_festivalist.growth_strength.quadratic_div_b = 1;
-
-        p_festivalist.growth_defense.linear_mult = 3;
-        p_festivalist.growth_defense.linear_div = 200;
-        p_festivalist.growth_defense.base_amount = 32;
-        p_festivalist.growth_defense.quadratic_div_a = 200;
-        p_festivalist.growth_defense.quadratic_div_b = 2;
-
-        p_festivalist.growth_magic.linear_mult = 6;
-        p_festivalist.growth_magic.linear_div = 4;
-        p_festivalist.growth_magic.base_amount = 18;
-        p_festivalist.growth_magic.quadratic_div_a = 200;
-        p_festivalist.growth_magic.quadratic_div_b = 2;
-
-        p_festivalist.growth_magic_defense.linear_mult = 3;
-        p_festivalist.growth_magic_defense.linear_div = 16;
-        p_festivalist.growth_magic_defense.base_amount = 38;
-        p_festivalist.growth_magic_defense.quadratic_div_a = 200;
-        p_festivalist.growth_magic_defense.quadratic_div_b = 2;
-
-        p_festivalist.growth_agility.linear_mult = 0;
-        p_festivalist.growth_agility.linear_div = 17;
-        p_festivalist.growth_agility.base_amount = 54;
-        p_festivalist.growth_agility.quadratic_div_a = 200;
-        p_festivalist.growth_agility.quadratic_div_b = 4;
-
-        p_festivalist.growth_evasion.linear_mult = 0;
-        p_festivalist.growth_evasion.linear_div = 20;
-        p_festivalist.growth_evasion.base_amount = 10;
-        p_festivalist.growth_evasion.quadratic_div_a = 200;
-        p_festivalist.growth_evasion.quadratic_div_b = 4;
-
-        p_festivalist.growth_accuracy.linear_mult = 0;
-        p_festivalist.growth_accuracy.linear_div = 17;
-        p_festivalist.growth_accuracy.base_amount = 120;
-        p_festivalist.growth_accuracy.quadratic_div_a = 200;
-        p_festivalist.growth_accuracy.quadratic_div_b = 4;
-
-        p_festivalist.growth_luck.linear_mult = 0;
-        p_festivalist.growth_luck.linear_div = 22;
-        p_festivalist.growth_luck.base_amount = 13;
-        p_festivalist.growth_luck.quadratic_div_a = 200;
-        p_festivalist.growth_luck.quadratic_div_b = 4;
-
-
-        //weapon and armor
-        p_festivalist.paine_weapon_data[0].weapon_model = 0x1140;
-        p_festivalist.paine_weapon_data[0].weapon_position = 5;
-        p_festivalist.paine_weapon_data[1].weapon_model = 0;
-        p_festivalist.paine_weapon_data[1].weapon_position = 0;
-        p_festivalist.paine_weapon_data[2].weapon_model = 0;
-        p_festivalist.paine_weapon_data[2].weapon_position = 0;
-        p_festivalist.paine_weapon_data[3].weapon_model = 0;
-        p_festivalist.paine_weapon_data[3].weapon_position = 0;
-
-
-        // abilities
-        p_festivalist.dressphere_abilities[0].requirement = 0;
-        p_festivalist.dressphere_abilities[0].ability = 0x302D; // P. Attack
-
-        p_festivalist.dressphere_abilities[1].requirement = 1;
-        p_festivalist.dressphere_abilities[1].ability = 0x31FC; // Multi-Cura
-
-        p_festivalist.dressphere_abilities[2].requirement = 0;
-        p_festivalist.dressphere_abilities[2].ability = 0x31F9; // Dark
-
-        p_festivalist.dressphere_abilities[3].requirement = 0x31F9;
-        p_festivalist.dressphere_abilities[3].ability = 0x31FF; // Darkra
-
-        p_festivalist.dressphere_abilities[4].requirement = 0x320B;
-        p_festivalist.dressphere_abilities[4].ability = 0x31F6; // Requiem
-
-        p_festivalist.dressphere_abilities[5].requirement = 1;
-        p_festivalist.dressphere_abilities[5].ability = 0x320D; // Multi-Fira
-
-        p_festivalist.dressphere_abilities[6].requirement = 1;
-        p_festivalist.dressphere_abilities[6].ability = 0x320C; // Multi-Blizzara
-        
-        p_festivalist.dressphere_abilities[7].requirement = 1;
-        p_festivalist.dressphere_abilities[7].ability = 0x320E; // Multi-Thundara
-        
-        p_festivalist.dressphere_abilities[8].requirement = 1;
-        p_festivalist.dressphere_abilities[8].ability = 0x320F; // Multi-Watera
-        
-        p_festivalist.dressphere_abilities[9].requirement = 0x31FC;
-        p_festivalist.dressphere_abilities[9].ability = 0x3210; // Syphon
-        
-        p_festivalist.dressphere_abilities[10].requirement = 1;
-        p_festivalist.dressphere_abilities[10].ability = 0x3211; // Souleater
-        
-        p_festivalist.dressphere_abilities[11].requirement = 0x3210;
-        p_festivalist.dressphere_abilities[11].ability = 0x320B; // Bubble
-        
-        p_festivalist.dressphere_abilities[12].requirement = 0x3211;
-        p_festivalist.dressphere_abilities[12].ability = 0x320A; // Balance
-        
-        p_festivalist.dressphere_abilities[13].requirement = 1;
-        p_festivalist.dressphere_abilities[13].ability = 0x8077; // SOS Regen
-        
-        p_festivalist.dressphere_abilities[14].requirement = 1;
-        p_festivalist.dressphere_abilities[14].ability = 0x801A; // Sage Lv.2
-        
-        p_festivalist.dressphere_abilities[15].requirement = 0x801A;
-        p_festivalist.dressphere_abilities[15].ability = 0x801B; // Sage Lv.3
-
-        // Write the changes to memory
-        *(Job*)h_MsGetRomJob(2, 0x501F, null) = p_festivalist;
-    }
-
+    /// <summary>
+    /// Job data definitions
+    /// 
+    /// Note 1: Only Yuna's Freelance/Leblanc Goon data needs to be written back to job.bin in memory
+    /// </summary>
     public unsafe void InitYunaFreelancer() {
         // read and get copy of Job struct
         Job y_freelancer = *(Job*)h_MsGetRomJob(0, 0x5020, null);
 
-        y_freelancer.name_offset.text_offset = 2345;
+        y_freelancer.name_offset.text_offset = 2479;
         y_freelancer.help_offset.text_offset = 2357;
         y_freelancer.user = 0;
         y_freelancer.dressphere_menu_ordering = 15;
-        y_freelancer.icon = 99;
+        y_freelancer.icon = 90;
         y_freelancer.berserk_action = 0x302D;
 
         // stat growth
@@ -522,6 +124,42 @@ public partial class X2DSUnlimitModule : FhModule {
         y_freelancer.yuna_weapon_data[3].weapon_model = 0;
         y_freelancer.yuna_weapon_data[3].weapon_position = 0;
 
+
+        // abilities
+        /*
+        y_freelancer.dressphere_abilities[0].requirement = 0;
+        y_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
+        y_freelancer.dressphere_abilities[1].requirement = 0;
+        y_freelancer.dressphere_abilities[1].ability = 0;
+        y_freelancer.dressphere_abilities[2].requirement = 0;
+        y_freelancer.dressphere_abilities[2].ability = 0;
+        y_freelancer.dressphere_abilities[3].requirement = 0;
+        y_freelancer.dressphere_abilities[3].ability = 0;
+        y_freelancer.dressphere_abilities[4].requirement = 0;
+        y_freelancer.dressphere_abilities[4].ability = 0;
+        y_freelancer.dressphere_abilities[5].requirement = 0;
+        y_freelancer.dressphere_abilities[5].ability = 0;
+        y_freelancer.dressphere_abilities[6].requirement = 0;
+        y_freelancer.dressphere_abilities[6].ability = 0;
+        y_freelancer.dressphere_abilities[7].requirement = 0;
+        y_freelancer.dressphere_abilities[7].ability = 0; ;
+        y_freelancer.dressphere_abilities[8].requirement = 0;
+        y_freelancer.dressphere_abilities[8].ability = 0;
+        y_freelancer.dressphere_abilities[9].requirement = 0;
+        y_freelancer.dressphere_abilities[9].ability = 0;
+        y_freelancer.dressphere_abilities[10].requirement = 0;
+        y_freelancer.dressphere_abilities[10].ability = 0;
+        y_freelancer.dressphere_abilities[11].requirement = 0;
+        y_freelancer.dressphere_abilities[11].ability = 0;
+        y_freelancer.dressphere_abilities[12].requirement = 0;
+        y_freelancer.dressphere_abilities[12].ability = 0;
+        y_freelancer.dressphere_abilities[13].requirement = 0;
+        y_freelancer.dressphere_abilities[13].ability = 0;
+        y_freelancer.dressphere_abilities[14].requirement = 0;
+        y_freelancer.dressphere_abilities[14].ability = 0;
+        y_freelancer.dressphere_abilities[15].requirement = 0;
+        y_freelancer.dressphere_abilities[15].ability = 0;
+        */
 
         // abilities
         y_freelancer.dressphere_abilities[0].requirement = 0;
@@ -648,24 +286,20 @@ public partial class X2DSUnlimitModule : FhModule {
         // abilities
         y_leblancgoon.dressphere_abilities[0].requirement = 0;
         y_leblancgoon.dressphere_abilities[0].ability = 0x302D; // Attack
-
         y_leblancgoon.dressphere_abilities[1].requirement = 0;
-        y_leblancgoon.dressphere_abilities[1].ability = 0x30C8; // Flee
-
+        y_leblancgoon.dressphere_abilities[1].ability = 0;
         y_leblancgoon.dressphere_abilities[2].requirement = 0;
-        y_leblancgoon.dressphere_abilities[2].ability = 0x3176; // Hastw
-
-        y_leblancgoon.dressphere_abilities[3].requirement = 0x3176;
-        y_leblancgoon.dressphere_abilities[3].ability = 0x3177; // Hastega
-
-        y_leblancgoon.dressphere_abilities[4].requirement = 1;
-        y_leblancgoon.dressphere_abilities[4].ability = 0x306F; // Delay Attack
-        y_leblancgoon.dressphere_abilities[5].requirement = 0x306f;
-        y_leblancgoon.dressphere_abilities[5].ability = 0x3070; // Delay Buster
-        y_leblancgoon.dressphere_abilities[6].requirement = 1;
-        y_leblancgoon.dressphere_abilities[6].ability = 0x3165; // Steel Feather
-        y_leblancgoon.dressphere_abilities[7].requirement = 0x3165;
-        y_leblancgoon.dressphere_abilities[7].ability = 0x3166; // Diamond Feather
+        y_leblancgoon.dressphere_abilities[2].ability = 0;
+        y_leblancgoon.dressphere_abilities[3].requirement = 0;
+        y_leblancgoon.dressphere_abilities[3].ability = 0;
+        y_leblancgoon.dressphere_abilities[4].requirement = 0;
+        y_leblancgoon.dressphere_abilities[4].ability = 0;
+        y_leblancgoon.dressphere_abilities[5].requirement = 0;
+        y_leblancgoon.dressphere_abilities[5].ability = 0;
+        y_leblancgoon.dressphere_abilities[6].requirement = 0;
+        y_leblancgoon.dressphere_abilities[6].ability = 0;
+        y_leblancgoon.dressphere_abilities[7].requirement = 0;
+        y_leblancgoon.dressphere_abilities[7].ability = 0;
         y_leblancgoon.dressphere_abilities[8].requirement = 0;
         y_leblancgoon.dressphere_abilities[8].ability = 0;
         y_leblancgoon.dressphere_abilities[9].requirement = 0;
@@ -693,11 +327,11 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // data
         //rikku_freelancer.name_offset = 2345;
-        rikku_freelancer.name_offset.text_offset = 2345;
+        rikku_freelancer.name_offset.text_offset = 2479;
         rikku_freelancer.help_offset.text_offset = 2357;
         rikku_freelancer.user = 1;
         rikku_freelancer.dressphere_menu_ordering = 17;
-        rikku_freelancer.icon = 84;
+        rikku_freelancer.icon = 90;
         rikku_freelancer.berserk_action = 0x302d;
 
         // stat growth
@@ -768,6 +402,41 @@ public partial class X2DSUnlimitModule : FhModule {
         rikku_freelancer.rikku_weapon_data[3].weapon_model = 0;
         rikku_freelancer.rikku_weapon_data[3].weapon_position = 0;
 
+        // abilities
+        /*
+        rikku_freelancer.dressphere_abilities[0].requirement = 0;
+        rikku_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
+        rikku_freelancer.dressphere_abilities[1].requirement = 0;
+        rikku_freelancer.dressphere_abilities[1].ability = 0;
+        rikku_freelancer.dressphere_abilities[2].requirement = 0;
+        rikku_freelancer.dressphere_abilities[2].ability = 0;
+        rikku_freelancer.dressphere_abilities[3].requirement = 0;
+        rikku_freelancer.dressphere_abilities[3].ability = 0;
+        rikku_freelancer.dressphere_abilities[4].requirement = 0;
+        rikku_freelancer.dressphere_abilities[4].ability = 0;
+        rikku_freelancer.dressphere_abilities[5].requirement = 0;
+        rikku_freelancer.dressphere_abilities[5].ability = 0;
+        rikku_freelancer.dressphere_abilities[6].requirement = 0;
+        rikku_freelancer.dressphere_abilities[6].ability = 0;
+        rikku_freelancer.dressphere_abilities[7].requirement = 0;
+        rikku_freelancer.dressphere_abilities[7].ability = 0;
+        rikku_freelancer.dressphere_abilities[8].requirement = 0;
+        rikku_freelancer.dressphere_abilities[8].ability = 0;
+        rikku_freelancer.dressphere_abilities[9].requirement = 0;
+        rikku_freelancer.dressphere_abilities[9].ability = 0;
+        rikku_freelancer.dressphere_abilities[10].requirement = 0;
+        rikku_freelancer.dressphere_abilities[10].ability = 0;
+        rikku_freelancer.dressphere_abilities[11].requirement = 0;
+        rikku_freelancer.dressphere_abilities[11].ability = 0;
+        rikku_freelancer.dressphere_abilities[12].requirement = 0;
+        rikku_freelancer.dressphere_abilities[12].ability = 0;
+        rikku_freelancer.dressphere_abilities[13].requirement = 0;
+        rikku_freelancer.dressphere_abilities[13].ability = 0;
+        rikku_freelancer.dressphere_abilities[14].requirement = 0;
+        rikku_freelancer.dressphere_abilities[14].ability = 0;
+        rikku_freelancer.dressphere_abilities[15].requirement = 0;
+        rikku_freelancer.dressphere_abilities[15].ability = 0;
+        */
 
         // abilities
         rikku_freelancer.dressphere_abilities[0].requirement = 0;
@@ -892,28 +561,20 @@ public partial class X2DSUnlimitModule : FhModule {
         // abilities
         rikku_leblancgoon.dressphere_abilities[0].requirement = 0;
         rikku_leblancgoon.dressphere_abilities[0].ability = 0x302D; // Attack
-
         rikku_leblancgoon.dressphere_abilities[1].requirement = 0;
-        rikku_leblancgoon.dressphere_abilities[1].ability = 0x30C8; // Flee
-
+        rikku_leblancgoon.dressphere_abilities[1].ability = 0;
         rikku_leblancgoon.dressphere_abilities[2].requirement = 0;
-        rikku_leblancgoon.dressphere_abilities[2].ability = 0x3176; // Hastw
-
-        rikku_leblancgoon.dressphere_abilities[3].requirement = 0x3176;
-        rikku_leblancgoon.dressphere_abilities[3].ability = 0x3177; // Hastega
-
-        rikku_leblancgoon.dressphere_abilities[4].requirement = 1;
-        rikku_leblancgoon.dressphere_abilities[4].ability = 0x306F; // Delay Attack;
-
-        rikku_leblancgoon.dressphere_abilities[5].requirement = 0x306f;
-        rikku_leblancgoon.dressphere_abilities[5].ability = 0x3070; // Delay Buster
-
-        rikku_leblancgoon.dressphere_abilities[6].requirement = 1;
-        rikku_leblancgoon.dressphere_abilities[6].ability = 0x3165; // Steel Feather
-
-        rikku_leblancgoon.dressphere_abilities[7].requirement = 0x3165;
-        rikku_leblancgoon.dressphere_abilities[7].ability = 0x3166; // Diamond Feather
-
+        rikku_leblancgoon.dressphere_abilities[2].ability = 0;
+        rikku_leblancgoon.dressphere_abilities[3].requirement = 0;
+        rikku_leblancgoon.dressphere_abilities[3].ability = 0;
+        rikku_leblancgoon.dressphere_abilities[4].requirement = 0;
+        rikku_leblancgoon.dressphere_abilities[4].ability = 0;
+        rikku_leblancgoon.dressphere_abilities[5].requirement = 0;
+        rikku_leblancgoon.dressphere_abilities[5].ability = 0;
+        rikku_leblancgoon.dressphere_abilities[6].requirement = 0;
+        rikku_leblancgoon.dressphere_abilities[6].ability = 0;
+        rikku_leblancgoon.dressphere_abilities[7].requirement = 0;
+        rikku_leblancgoon.dressphere_abilities[7].ability = 0;
         rikku_leblancgoon.dressphere_abilities[8].requirement = 0;
         rikku_leblancgoon.dressphere_abilities[8].ability = 0;
         rikku_leblancgoon.dressphere_abilities[9].requirement = 0;
@@ -939,11 +600,11 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // data
         //paine_freelancer.name_offset = 2345;
-        paine_freelancer.name_offset.text_offset = 2345;
+        paine_freelancer.name_offset.text_offset = 2479;
         paine_freelancer.help_offset.text_offset = 2357;
         paine_freelancer.user = 1;
         paine_freelancer.dressphere_menu_ordering = 17;
-        paine_freelancer.icon = 84;
+        paine_freelancer.icon = 90;
         paine_freelancer.berserk_action = 0x302d;
 
         // stat growth
@@ -1016,36 +677,36 @@ public partial class X2DSUnlimitModule : FhModule {
         // abilities
         paine_freelancer.dressphere_abilities[0].requirement = 0;
         paine_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
-         paine_freelancer.dressphere_abilities[1].requirement = 0;
-         paine_freelancer.dressphere_abilities[1].ability = 0x30C8; // Flee
+        paine_freelancer.dressphere_abilities[1].requirement = 0;
+        paine_freelancer.dressphere_abilities[1].ability = 0;
         paine_freelancer.dressphere_abilities[2].requirement = 0;
-        paine_freelancer.dressphere_abilities[2].ability = 0x3176; // Hastw
-         paine_freelancer.dressphere_abilities[3].requirement = 0x3176;
-         paine_freelancer.dressphere_abilities[3].ability = 0x3177; // Hastega
-        paine_freelancer.dressphere_abilities[4].requirement = 1;
-        paine_freelancer.dressphere_abilities[4].ability = 0x306F; // Delay Attack
-         paine_freelancer.dressphere_abilities[5].requirement = 0x306f;
-         paine_freelancer.dressphere_abilities[5].ability = 0x3070; // Delay Buster
-        paine_freelancer.dressphere_abilities[6].requirement = 1;
-        paine_freelancer.dressphere_abilities[6].ability = 0x3165; // Steel Feather
-         paine_freelancer.dressphere_abilities[7].requirement = 0x3165;
-         paine_freelancer.dressphere_abilities[7].ability = 0x3166; // Diamond Feather
+        paine_freelancer.dressphere_abilities[2].ability = 0;
+        paine_freelancer.dressphere_abilities[3].requirement = 0;
+        paine_freelancer.dressphere_abilities[3].ability = 0;
+        paine_freelancer.dressphere_abilities[4].requirement = 0;
+        paine_freelancer.dressphere_abilities[4].ability = 0;
+        paine_freelancer.dressphere_abilities[5].requirement = 0;
+        paine_freelancer.dressphere_abilities[5].ability = 0;
+        paine_freelancer.dressphere_abilities[6].requirement = 0;
+        paine_freelancer.dressphere_abilities[6].ability = 0;
+        paine_freelancer.dressphere_abilities[7].requirement = 0;
+        paine_freelancer.dressphere_abilities[7].ability = 0;
         paine_freelancer.dressphere_abilities[8].requirement = 0;
         paine_freelancer.dressphere_abilities[8].ability = 0;
-         paine_freelancer.dressphere_abilities[9].requirement = 0;
-         paine_freelancer.dressphere_abilities[9].ability = 0;
+        paine_freelancer.dressphere_abilities[9].requirement = 0;
+        paine_freelancer.dressphere_abilities[9].ability = 0;
         paine_freelancer.dressphere_abilities[10].requirement = 0;
         paine_freelancer.dressphere_abilities[10].ability = 0;
-         paine_freelancer.dressphere_abilities[11].requirement = 0;
-         paine_freelancer.dressphere_abilities[11].ability = 0;
+        paine_freelancer.dressphere_abilities[11].requirement = 0;
+        paine_freelancer.dressphere_abilities[11].ability = 0;
         paine_freelancer.dressphere_abilities[12].requirement = 0;
         paine_freelancer.dressphere_abilities[12].ability = 0;
-         paine_freelancer.dressphere_abilities[13].requirement = 0;
-         paine_freelancer.dressphere_abilities[13].ability = 0;
+        paine_freelancer.dressphere_abilities[13].requirement = 0;
+        paine_freelancer.dressphere_abilities[13].ability = 0;
         paine_freelancer.dressphere_abilities[14].requirement = 0;
         paine_freelancer.dressphere_abilities[14].ability = 0;
-         paine_freelancer.dressphere_abilities[15].requirement = 0;
-         paine_freelancer.dressphere_abilities[15].ability = 0;
+        paine_freelancer.dressphere_abilities[15].requirement = 0;
+        paine_freelancer.dressphere_abilities[15].ability = 0;
 
         // Job Creature Data
     }
@@ -1132,53 +793,37 @@ public partial class X2DSUnlimitModule : FhModule {
         // abilities
         paine_leblancgoon.dressphere_abilities[0].requirement = 0;
         paine_leblancgoon.dressphere_abilities[0].ability = 0x302D; // Attack
-
         paine_leblancgoon.dressphere_abilities[1].requirement = 0;
-        paine_leblancgoon.dressphere_abilities[1].ability = 0x30C8; // Flee
-
+        paine_leblancgoon.dressphere_abilities[1].ability = 0;
         paine_leblancgoon.dressphere_abilities[2].requirement = 0;
-        paine_leblancgoon.dressphere_abilities[2].ability = 0x3176; // Hastw
-
-        paine_leblancgoon.dressphere_abilities[3].requirement = 0x3176;
-        paine_leblancgoon.dressphere_abilities[3].ability = 0x3177; // Hastega
-
-        paine_leblancgoon.dressphere_abilities[4].requirement = 1;
-        paine_leblancgoon.dressphere_abilities[4].ability = 0x306F; // Delay Attack
-
-        paine_leblancgoon.dressphere_abilities[5].requirement = 0x306f;
-        paine_leblancgoon.dressphere_abilities[5].ability = 0x3070; // Delay Buster
-
-        paine_leblancgoon.dressphere_abilities[6].requirement = 1;
-        paine_leblancgoon.dressphere_abilities[6].ability = 0x3165; // Steel Feather
-
-        paine_leblancgoon.dressphere_abilities[7].requirement = 0x3165;
-        paine_leblancgoon.dressphere_abilities[7].ability = 0x3166; // Diamond Feather
-
+        paine_leblancgoon.dressphere_abilities[2].ability = 0;
+        paine_leblancgoon.dressphere_abilities[3].requirement = 0;
+        paine_leblancgoon.dressphere_abilities[3].ability = 0;
+        paine_leblancgoon.dressphere_abilities[4].requirement = 0;
+        paine_leblancgoon.dressphere_abilities[4].ability = 0;
+        paine_leblancgoon.dressphere_abilities[5].requirement = 0;
+        paine_leblancgoon.dressphere_abilities[5].ability = 0;
+        paine_leblancgoon.dressphere_abilities[6].requirement = 0;
+        paine_leblancgoon.dressphere_abilities[6].ability = 0;
+        paine_leblancgoon.dressphere_abilities[7].requirement = 0;
+        paine_leblancgoon.dressphere_abilities[7].ability = 0;
         paine_leblancgoon.dressphere_abilities[8].requirement = 0;
         paine_leblancgoon.dressphere_abilities[8].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[9].requirement = 0;
         paine_leblancgoon.dressphere_abilities[9].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[10].requirement = 0;
         paine_leblancgoon.dressphere_abilities[10].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[11].requirement = 0;
         paine_leblancgoon.dressphere_abilities[11].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[12].requirement = 0;
         paine_leblancgoon.dressphere_abilities[12].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[13].requirement = 0;
         paine_leblancgoon.dressphere_abilities[13].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[14].requirement = 0;
         paine_leblancgoon.dressphere_abilities[14].ability = 0;
-
         paine_leblancgoon.dressphere_abilities[15].requirement = 0;
         paine_leblancgoon.dressphere_abilities[15].ability = 0;
-
-        // Job Creature Data
+        // Job - Creature Data
     }
 
 }

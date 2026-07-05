@@ -160,10 +160,6 @@ public partial class X2DSUnlimitModule : FhModule
     public delegate uint MsGetSaveCommand(uint p1, uint p2); //60c500
     private readonly FhMethodHandle<MsGetSaveCommand> _MsGetSaveCommand_handle;//60c500
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_778160(int param_1, int param_2, int param_3, int param_4);
-    private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;//778160
-
 
     //sub-function delegates
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -222,13 +218,13 @@ public partial class X2DSUnlimitModule : FhModule
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     //62ab30 -  FUN_710026cc90? - btlSoundStreamNormal? -- using this to force alts's hurt SFX to play
-    public unsafe delegate uint beta_fx(uint chr_id, uint sound_id);
-    private readonly FhMethodHandle<beta_fx> _beta_fx_handle;
+    public unsafe delegate uint FUN_62AB30(uint chr_id, uint sound_id);
+    private readonly FhMethodHandle<FUN_62AB30> _FUN_62AB30_handle;
 
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
     //534a70 - this function accessed the VoiceIDMapper.txt integer/string pointer for Yuna's hurt sound. Might use this to silence it?
-    public unsafe delegate void charlie_fx(int* param_1, int param_2, int param_3, int param_4,/*FMODCHANNELINDEX*/ int param_5, int param_6, int* param_7, int* param_8, int* param_9);
-    private readonly FhMethodHandle<charlie_fx> _charlie_fx_handle;
+    public unsafe delegate void FUN_534A70(int* param_1, int param_2, int param_3, int param_4,/*FMODCHANNELINDEX*/ int param_5, int param_6, int* param_7, int* param_8, int* param_9);
+    private readonly FhMethodHandle<FUN_534A70> _FUN_534A70_handle;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int MsGetChr(uint chr_id);
@@ -257,33 +253,99 @@ public partial class X2DSUnlimitModule : FhModule
     public delegate int TOGetFaceIndex2(int param_1, uint param_2);
     private readonly FhMethodHandle<TOGetFaceIndex2> _TOGetFaceIndex2_handle;// 793190
 
+    // hooked to get VoiceIDMapper pointer -> AltChrs -> sound.cs
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void MsBtlChrGetMem();
+    private readonly FhMethodHandle<MsBtlChrGetMem> _MsBtlChrGetMem_handle;// 60fe10
+
+    // overwrite voiceline integers on spherechange
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOCtrlATBChr();
+    private readonly FhMethodHandle<TOCtrlATBChr> _TOCtrlATBChr_handle;// 75e2c0
+
     /*
     // Main Delegate 4
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void FUN_778160(int param_1, int param_2, int param_3, int param_4);
-    private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;// 778160
-    
+    private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;// 778160*/
+
+
+    // Menu functionality - handle Ability Menu case  0x77762f - so correct ability name is displayed.
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_777270(uint param_1);
+    private readonly FhMethodHandle<FUN_777270> _FUN_777270_handle;//777270
+
+    // Hopefully Abilities menu 16x ability list functionality - add Freelancer and Leblanc Goon support
+    // We're interested in it's call from FFX-2.exe + 3773CE (FUN_00777270_7100424240)
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate bool FUN_776EC0(uint param_1, int ability_slot);
+    private readonly FhMethodHandle<FUN_776EC0> _FUN_776EC0_handle;//776EC0
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMenuSetSaveLearn(byte param_1, uint param_2, int param_3);
+    private readonly FhMethodHandle<TOMenuSetSaveLearn> _TOMenuSetSaveLearn_handle;//778f40
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMenuSetMacroCommandType(int param_1, int param_2, byte param_3);
+    private readonly FhMethodHandle<TOMenuSetMacroCommandType> _TOMenuSetMacroCommandType_handle; //796330
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int TOBtlGetComName(uint param_1);
+    private readonly FhMethodHandle<TOBtlGetComName> _TOBtlGetComName_handle; //759fd0
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMenuSetMacroCommandValue(int param_1, int param_2, uint param_3);
+    private readonly FhMethodHandle<TOMenuSetMacroCommandValue> _TOMenuSetMacroCommandValue_handle; //796360
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint TOGetMenuText(uint param_1);
+    private readonly FhMethodHandle<TOGetMenuText> _TOGetMenuText_handle; //779250
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint SndSepPlaySimple(uint param_1);
+    private readonly FhMethodHandle<SndSepPlaySimple> _SndSepPlaySimple_handle; //744760
+
+    // Abilities menu 16x ability list rendering function
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_778160(int param_1, int param_2, int param_3, int param_4);
+    private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;//778160
+
     // thunk at 87d984
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate int sprintf(byte* _Dest, byte* _Format);
     private sprintf _sprintf = FhUtil.get_fptr<sprintf>(0x47d984);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int FUN_007730e0(int param_1);
-    private FUN_007730e0 _FUN_007730e0 = FhUtil.get_fptr<FUN_007730e0>(0x3730e0);
+    public delegate int TOGetRtcValue(int param_1);
+    private TOGetRtcValue _TOGetRtcValue = FhUtil.get_fptr<TOGetRtcValue>(0x3730e0);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int FUN_007730c0(int param_1);
-    private FUN_007730c0 _FUN_007730c0 = FhUtil.get_fptr<FUN_007730c0>(0x3730c0);
+    public delegate int TOGetRtcRatio(int param_1);
+    private TOGetRtcRatio _TOGetRtcRatio = FhUtil.get_fptr<TOGetRtcRatio>(0x3730c0);
 
     //params need types verifying perhaps (were undefined4)
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int FUN_00779dc0(int param_1, int param_2, int param_3, int param_4, int param_5, int param_6, int param_7);
-    private FUN_00779dc0 _FUN_00779dc0 = FhUtil.get_fptr<FUN_00779dc0>(0x3730c0);
+    public delegate int TOMenuDrawRotPlate(int param_1, int param_2, int param_3, int param_4, int param_5, int param_6, int param_7);
+    private TOMenuDrawRotPlate _TOMenuDrawRotPlate = FhUtil.get_fptr<TOMenuDrawRotPlate>(0x379dc0);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_00776910();
-    private FUN_00776910 _FUN_00776910 = FhUtil.get_fptr<FUN_00776910>(0x376910);
+    public delegate void TOMenuOpenPkt();
+    private TOMenuOpenPkt _TOMenuOpenPkt = FhUtil.get_fptr<TOMenuOpenPkt>(0x376910);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_007B0F50(int param_1, int param_2, int param_3, int param_4, int colour);
+    private FUN_007B0F50 _FUN_007B0F50 = FhUtil.get_fptr<FUN_007B0F50>(0x3B0F50);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMkpShape2dMenu(int param_1, int param_2, int param_3, int param_4);
+    private TOMkpShape2dMenu _TOMkpShape2dMenu = FhUtil.get_fptr<TOMkpShape2dMenu>(0x3B1250);
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void FUN_007AE430(byte* param_1, int param_2, int param_3, int param_4, int param_5, int param_6, int param_7);
+    private FUN_007AE430 _FUN_007AE430 = FhUtil.get_fptr<FUN_007AE430>(0x3AE430);
+
 
     //was float10 return type
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -301,8 +363,8 @@ public partial class X2DSUnlimitModule : FhModule
     private TOKickPacket _TOKickPacket = FhUtil.get_fptr<TOKickPacket>(0x3add10);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_007ae7e0(int param_1);
-    private FUN_007ae7e0 _FUN_007ae7e0 = FhUtil.get_fptr<FUN_007ae7e0>(0x3ae7e0);
+    public delegate void TOMenuChangeFrameAccPlate(int param_1);
+    private TOMenuChangeFrameAccPlate _TOMenuChangeFrameAccPlate = FhUtil.get_fptr<TOMenuChangeFrameAccPlate>(0x3ae7e0);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void FFX2_Set_UI_Scale(int param_1, int param_2);// 7a0060
@@ -322,19 +384,19 @@ public partial class X2DSUnlimitModule : FhModule
     private FFX2_Reset_UI_Scale _FFX2_Reset_UI_Scale = FhUtil.get_fptr<FFX2_Reset_UI_Scale>(0x3a0030);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate byte FUN_00764680();// 764680
-    private FUN_00764680 _FUN_00764680 = FhUtil.get_fptr<FUN_00764680>(0x364680);
+    public delegate byte TkMenuGetTimer();// 764680
+    private TkMenuGetTimer _TkMenuGetTimer = FhUtil.get_fptr<TkMenuGetTimer>(0x364680);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void FUN_007aeda0(int param_1, int param_2, int param_3);// 7aeda0
     private FUN_007aeda0 _FUN_007aeda0 = FhUtil.get_fptr<FUN_007aeda0>(0x3aeda0);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_007b0a60();// 7b0a60
-    private FUN_007b0a60 _FUN_007b0a60 = FhUtil.get_fptr<FUN_007b0a60>(0x3b0a60);
+    public delegate void TOMkpResetFrameAcc();// 7b0a60
+    private TOMkpResetFrameAcc _TOMkpResetFrameAcc = FhUtil.get_fptr<TOMkpResetFrameAcc>(0x3b0a60);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_0077aa20(int param_1, int param_2, int param_3, int param_4, int param_5);// 77aa20
-    private FUN_0077aa20 _FUN_0077aa20 = FhUtil.get_fptr<FUN_0077aa20>(0x37aa20);
-    */
+    public delegate void TOMkpExPlateParam(int param_1, int param_2, int param_3, int param_4, int param_5);// 77aa20
+    private TOMkpExPlateParam _TOMkpExPlateParam = FhUtil.get_fptr<TOMkpExPlateParam>(0x37aa20);
+   
 }

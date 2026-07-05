@@ -18,17 +18,9 @@ public partial class X2DSUnlimitModule : FhModule {
         ushort* party_ds_record_base = FhUtil.ptr_at<ushort>(0xa016f6);
 
         switch (original_model) {
-            //Yuna Gunner model / Festivalist
-            case 974:
+            //Yuna Gunner model
             case 1:
                 ushort y_ds_record = *(ushort*)(party_ds_record_base);
-                // Festivalist replacement
-                if ((y_ds_record) == 0x501d) {
-                    *(int*)(chr_base_addr + 4) = 0x1139;
-                    *(int*)(chr_base_addr + 8) = 0x1139;
-                    WriteChrName(CharName.Kimahri, chr_id);
-                    return chr_id;
-                }
                 // Freelancer replacement
                 if ((y_ds_record) == 0x5020) {
                     *(int*)(chr_base_addr + 4) = 0x1139;
@@ -42,17 +34,9 @@ public partial class X2DSUnlimitModule : FhModule {
                     return chr_id;
                 }
                 return chr_id;
-            // Rikku Thief model / Festivalist
-            case 975:
+            // Rikku Thief model
             case 26:
                 ushort r_ds_record = *(ushort*)(party_ds_record_base + (1 * 0x40));
-                // Festivalist replacement
-                if ((r_ds_record) == 0x501E) {
-                    *(int*)(chr_base_addr + 4) = 0x113D;
-                    *(int*)(chr_base_addr + 8) = 0x113D;
-                    WriteChrName(CharName.Tidus, chr_id);
-                    return chr_id;
-                }
                 // Freelancer replacement
                 if (r_ds_record == 0x5020) {
                     *(int*)(chr_base_addr + 4) = 0x113D;
@@ -66,17 +50,8 @@ public partial class X2DSUnlimitModule : FhModule {
                     return chr_id;
                 }
                 return chr_id;
-            // Paine Warrior model / Festivalist
-            case 976:
             case 51:
                 ushort p_ds_record = *(ushort*)(party_ds_record_base + (2 * 0x40));
-                // Festivalist replacement
-                if ((p_ds_record) == 0x501F) {
-                    *(int*)(chr_base_addr + 4) = 0x113F;
-                    *(int*)(chr_base_addr + 8) = 0x113F;
-                    WriteChrName(CharName.Seymour, chr_id);
-                    return chr_id;
-                }
                 // Freelancer replacement
                 if (p_ds_record == 0x5020) {
                     *(int*)(chr_base_addr + 4) = 0x113F;
@@ -90,17 +65,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     return chr_id;
                 }
                 return chr_id;
-            //Yuna White Mage Replace with FFX Model
-            case 18:
-                *(int*)(chr_base_addr + 4) = 0x0386;
-                *(int*)(chr_base_addr + 8) = 0x0386;
-                return chr_id;
             default:
-                //if model not changed just return original return result
-                if (chr_id == 0) {
-                    WriteChrName(CharName.Yuna, chr_id);
-                }
-
                 return orig_return_result;
         }
     }
