@@ -33,11 +33,6 @@ public struct DSAbilityListData {
 
 public partial class X2DSUnlimitModule : FhModule {
 
-    public void h_TOMenuSetSaveLearn(byte param_1, uint param_2, int param_3) {
-        _TOMenuSetSaveLearn_handle.orig_fptr.Invoke(param_1, param_2, param_3);
-        return;
-    }
-
     public void h_TOMenuSetMacroCommandType(int param_1, int param_2, byte param_3) {
         _TOMenuSetMacroCommandType_handle.orig_fptr.Invoke(param_1, param_2, param_3);
         return;
@@ -60,9 +55,14 @@ public partial class X2DSUnlimitModule : FhModule {
         return _SndSepPlaySimple_handle.orig_fptr.Invoke(param_1);
     }
 
-    // Used for Abilities Menu, necessary for Freelancer and Leblanc Goon to show up in job list
-    public unsafe uint h_kyGetJobNum3()
+    public unsafe void* h_memset(void* _Dst, int _Val, uint _Size)
     {
+        return _memset_handle.orig_fptr.Invoke(_Dst, _Val, _Size);
+    }
+
+
+    // Used for Abilities Menu, necessary for Freelancer and Leblanc Goon to show up in job list
+    public unsafe uint h_kyGetJobNum3() {
         byte bVar1;
         int iVar2;
         int iVar3;
@@ -73,11 +73,9 @@ public partial class X2DSUnlimitModule : FhModule {
 
         iVar3 = 0;
         number_of_elements = 0;
-        for (int i = 0; i < CustomDsLookupTable.Length; i++)
-        {
+        for (int i = 0; i < CustomDsLookupTable.Length; i++) {
             iVar2 = h_MsGetSaveDreSphere(CustomDsLookupTable[i]);
-            if (0 < iVar2)
-            {
+            if (0 < iVar2) {
                 unique_ds_on_grid_list[number_of_elements] = (byte)CustomDsLookupTable[i];
                 number_of_elements++;
             }
@@ -94,8 +92,7 @@ public partial class X2DSUnlimitModule : FhModule {
         int tgt_special_ds_id = special_ds_id_records[menu_chr_id];
 
         iVar3 = h_MsGetSaveDreSphere((uint)tgt_special_ds_id);
-        if (0 < iVar3)
-        {
+        if (0 < iVar3) {
             FhUtil.set_at<ushort>(0x9f6028, 0x101);
 
             bVar1 = (byte)special_ds_id_records[menu_chr_id];
@@ -108,15 +105,25 @@ public partial class X2DSUnlimitModule : FhModule {
 
 
         FhUtil.set_at<byte>(0x9f602c, (byte)number_of_elements);
-        _logger.Info("Return result: " + number_of_elements.ToString());
+        //_logger.Info("Return result: " + number_of_elements.ToString());
         return number_of_elements;
 
     }
 
-    public unsafe void* h_memset(void* _Dst, int _Val, uint _Size)
-    {
-        return _memset_handle.orig_fptr.Invoke(_Dst, _Val, _Size);
+
+    public unsafe uint h_TOMenuGetJobLearnedRate(uint param_1, uint job_id) {
+        return (uint)ability_list_data_ptr[job_id & 0xff].percentage;
     }
+
+    public unsafe void h_TOMenuSetSaveLearn(byte chr_id, uint job_id, int slot) {
+        DSAbilityListData* abi_list_table = ability_list_data_ptr;
+        uint job_num = job_id & 0xff;
+
+        uint abilityId = abi_list_table[job_num].Abilities[slot].ability_id;
+
+        h_MsSetSaveLearn(chr_id, job_id, (ushort)abilityId); // call the underlying save-write function directly with the resolved id
+    }
+
 
     //adds Freelancer/Leblanc Goon to abilities menu job list
     public unsafe void h_TOMenuMakeJobList(int chr_id)
@@ -125,9 +132,10 @@ public partial class X2DSUnlimitModule : FhModule {
         uint job_id;
 
 
-        DSAbilityListData* job_table = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+        //DSAbilityListData* job_table = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+        DSAbilityListData* job_table = ability_list_data_ptr;
 
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < ability_list_count; i++) {
             ref DSAbilityListData job = ref job_table[i];
             job.i0 = 0;
             job.ds_id = 0xff;
@@ -241,64 +249,41 @@ public partial class X2DSUnlimitModule : FhModule {
             job_idNum_toCheck++;
         }
 
-        /*
-        if (validJob)
-        {
-            puVar4[-1] = 1;
-            puVar4[0] = job_id;
-
-            byte count = FhUtil.get_at<byte>(0x12c0265);
-            FhUtil.set_at<byte>(0x12c0265, (byte)(count + 1));
-        }
-        else
-        {
-            puVar4[-1] = 0;
-            puVar4[0] = 0xff;
-            puVar4[1] = 0;
-            puVar4[2] = 0;
-        }
-
-        puVar4 += 0x44;
-        job_idNum_toCheck++;*/
     }
 
 
 
     // p1 is DAT_00df6d80 -> chr_id of who is viewed in the menu YRP -> 0,1,2, p2 is ds_id from kyGetJobIndex (currently equipped/viewed ds_id?)
     // Function updated to use custom table
-    public unsafe void h_TOMenuStartJobAbilityWindow(uint param_1, uint param_2) {
-        FhUtil.set_at<uint>(0x12c0270, param_1);
-        FhUtil.set_at<uint>(0x12c0274, param_2 | 0x5000);
+    public unsafe void h_TOMenuStartJobAbilityWindow(uint menu_chr_id, uint menu_job_id) {
+        FhUtil.set_at<uint>(0x12c0270, menu_chr_id);
+        FhUtil.set_at<uint>(0x12c0274, menu_job_id | 0x5000);
 
-        DSAbilityListData* jobTable = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
-        uint targetDsId = param_2 | 0x5000;
+        //DSAbilityListData* jobTable = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+        DSAbilityListData* abi_list_data = ability_list_data_ptr;
 
-        int iVar1 = 0;
-        do {
-            ushort ds_full_id = CustomTOMenuStartJobAbilityWindow_DS_Table[iVar1];
-            byte checking_ds_id = (byte)(ds_full_id & 0xff);
-
-            if (jobTable[checking_ds_id].ds_id == targetDsId) {
-                FhUtil.set_at<byte>(0x12c0266, (byte)iVar1);
+        for (int i = 0; i < ability_list_count; i++) {
+            if ((menu_job_id | 0x5000) == abi_list_data[i].ds_id) {
+                FhUtil.set_at<byte>(0x12c0266, (byte)i);
             }
-
-            iVar1++;
-        } while (iVar1 < CustomTOMenuStartJobAbilityWindow_DS_Table.Length);
+        }
 
         FhUtil.set_at<uint>(0x963ed4, 7); // used for menu progression: tells game it's now entered the DS ability list with 16 moves showing, AP, mastery, etc.
     }
 
     // Writes abilities menu, dressphere 16x ability list data
-    public unsafe void h_TOMenuMakeJobAbilityList(uint chr_id, uint job_id)
-    {
+    public unsafe void h_TOMenuMakeJobAbilityList(uint chr_id, uint job_id) {
         uint uVar1;
         int iVar2;
+
+        Job* job_data;
+
         uint uVar3;
         int iVar4;
         int iVar5;
         byte* pbVar6;
         uint uVar7;
-        uint* puVar8;
+        uint* puVar7;
         byte* pbVar9;
 
         int local_18;
@@ -307,81 +292,108 @@ public partial class X2DSUnlimitModule : FhModule {
         int local_c;
         uint local_8;
 
-        switch (job_id)
-        {
-            case 0x5010:
-                chr_id = 3;
-                break;
-            case 0x5011:
-                chr_id = 4;
-                break;
-            default:
-                break;
-            case 0x5013:
-                chr_id = 5;
-                break;
-            case 0x5014:
-                chr_id = 6;
-                break;
-            case 0x5016:
-                chr_id = 7;
-                break;
-            case 0x5017:
-                chr_id = 8;
-                break;
+
+        uint current_ap;
+        uint needed_ap;
+
+        switch (job_id) {
+            case 0x5010: chr_id = 3; break;
+            case 0x5011: chr_id = 4; break;
+            case 0x5013: chr_id = 5; break;
+            case 0x5014: chr_id = 6; break;
+            case 0x5016: chr_id = 7; break;
+            case 0x5017: chr_id = 8; break;
+            default: break;
         }
 
 
+        DSAbilityListData* abi_list_table = ability_list_data_ptr;
+        uint job_num = job_id & 0xff;
+
+        //local_8 = chr_id;
+        byte* local_1c = stackalloc byte[64];
+
+
+        job_data = h_MsGetRomJob(chr_id, job_id, local_1c);
+        //uVar1 = local_8;
+
+        //local_14 = (ushort*)(iVar2 + 0x3e); // start of job.bin dressphere abilities
+        //local_14 = job_data->dressphere_abilities;
+
         
+
+        /*
         uint* DAT_11bb200 = FhUtil.ptr_at<uint>(0xdbb200);
         nint DAT_11bb200_addr = (nint)DAT_11bb200;
-
         //local_10 = &DAT_011bb200 + (param_2 & 0xfff) * 0x44;
         local_10 = (uint*)DAT_11bb200_addr + (job_id & 0xfff) * 0x44; // start of ability list data
+        //local_10 = &DAT_011bb200 + (param_2 & 0xfff) * 0x110;
+
         local_8 = chr_id;
 
-        byte* local_1c = stackalloc byte[64];
+        //byte* local_1c = stackalloc byte[64];
 
         iVar2 = (int)h_MsGetRomJob(chr_id, job_id, local_1c);
         uVar1 = local_8;
         local_14 = (ushort*)(iVar2 + 0x3e); // start of job.bin dressphere abilities
-
-        byte* D_dbb213 = FhUtil.ptr_at<byte>(0xdbb213);
-
-        //iVar2 = (int)((job_id & 0xfff) * 0x110 + 0x11bb213);
-        iVar2 = (int)((job_id & 0xfff) * 0x110 + (int)D_dbb213);
-        local_18 = 0x10;
-        do
-        {
-            uVar7 = (uint)*local_14; // command/a_ability id
-            
-            *(byte*)(iVar2 + -3) = 0; // zeroes is visible bool
-            *(ushort*)(iVar2 + -1) = 0; // zeroes is mastered bool
-
-            *(uint*)(iVar2 + 1) = uVar7; // command
-
-            uVar3 = h_MsGetSaveAp(uVar1, uVar7); // current AP
-            *(uint*)(iVar2 + 5) = uVar3;
-
-            iVar4 = h_MsGetSaveNeedAp((byte)uVar1, uVar7); // Needed AP
-            uVar3 = local_8;
-            *(int*)(iVar2 + 9) = iVar4;
-
-            if (iVar4 < *(int*)(iVar2 + 5)) // if current AP greater than needed AP
-            {
-                *(int*)(iVar2 + 5) = iVar4; // set current AP to needed AP Value (cap, stop increasing)
-            }
-            local_14 = local_14 + 2;
-            iVar2 = iVar2 + 0x10;
-            local_18 = local_18 + -1;
-        } while (local_18 != 0);
         
 
+        byte* D_dbb213 = FhUtil.ptr_at<byte>(0xdbb213);
+        //iVar2 = (int)((job_id & 0xfff) * 0x110 + 0x11bb213);
+        iVar2 = (int)((job_id & 0xfff) * 0x110 + (int)D_dbb213); // focus is on is_selected bool
+        */
+
+        // Initial pass - add ability IDS, set AP
+        for (int i = 0; i < 16; i++) {
+            ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i]; // memory table
+            uint abilityId = job_data->dressphere_abilities[i].ability; //job.bin style Job
+
+            // Set values
+            ability.is_visible = false;
+            ability.is_mastered = false;
+            ability.is_selected = false;
+            ability.ability_id = abilityId;
+
+            uint currentAp = h_MsGetSaveAp(chr_id, abilityId);
+            uint neededAp = h_MsGetSaveNeedAp((byte)chr_id, abilityId);
+
+            ability.ap_current = currentAp;
+            ability.ap_needed = neededAp;
+
+            if (neededAp < currentAp) {
+                ability.ap_current = neededAp;
+            }
+        }
 
 
-        local_18 = h_MsGetJobAbilityList((int)local_8, (int)job_id, &local_c, 0);
-        puVar8 = local_10 + 5;
-        iVar4 = 0x10;
+
+
+        int learnable_list = h_MsGetJobAbilityList((int)chr_id, (int)job_id, &local_c, 0);
+
+        for (int i = 0; i < 16; i++) {
+            ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i];
+
+            for (int j = 0; j < 16; j++) {
+                ushort candidate = *(ushort*)(learnable_list + j * 2);
+                if (candidate == 0x00FF) continue;
+
+                if (ability.ability_id == candidate) {
+                    ability.is_visible = true;
+
+                    uint currentLearnTarget = h_MsGetSaveLearn(chr_id, job_id);
+                    if (currentLearnTarget == ability.ability_id) {
+                        ability.is_selected = true;   // <-- fix: was incorrectly set to is_visible again
+                    }
+                    break;
+                }
+            }
+        }
+
+
+        /*
+        iVar4 = 0x10; // iteratorr
+        puVar8 = local_10 + 5; // ability id
+        
         iVar2 = local_c;
         do
         {
@@ -393,7 +405,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     if (*puVar8 == (uint)*(ushort*)(local_18 + iVar5 * 2))
                     {
                         *(byte*)(puVar8 - 1) = 1; // updates is_selected bool
-                        uVar7 = h_MsGetSaveLearn(uVar3, job_id);
+                        uVar7 = h_MsGetSaveLearn(chr_id, job_id);
                         iVar2 = local_c;
                         if (uVar7 == *puVar8)
                         {
@@ -407,120 +419,65 @@ public partial class X2DSUnlimitModule : FhModule {
             puVar8 = puVar8 + 4;
             iVar4 = iVar4 + -1;
         } while (iVar4 != 0);
+        */
 
-        iVar4 = h_MsGetJobAbilityList((int)uVar3, (int)job_id, &local_c, 1);
-        pbVar9 = (byte*)((int)local_10 + 0x12); // skip jobid header part of AbilityListData, centers on is_mastered
-        pbVar6 = pbVar9;
 
-        iVar2 = 0x10; // 16 abilities
-        do
-        {
-            iVar5 = iVar2;
-            iVar2 = 0;
-            if (0 < local_c)
-            {
-                do
-                {
+        int mastered_list = h_MsGetJobAbilityList((int)chr_id, (int)job_id, &local_c, 1);
 
-                    /*
-                    uint testedability_maybe = *(uint*)(pbVar6 + 2);
-                    uint tested_against = (uint)*(ushort*)(iVar4 + iVar2 * 2); // from job_abilities
-                    */
+        for (int i = 0; i < 16; i++) {
+            ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i];
 
-                    // if ability id? = ability to check against
-                    if (*(uint*)(pbVar6 + 2) == (uint)*(ushort*)(iVar4 + iVar2 * 2)) 
-                    {
+            if (0 < local_c) {
+                for (int j = 0; j < 16; j++) {
+                    ushort candidate = *(ushort*)(mastered_list + j * 2);
+                    if (candidate == 0x00FF) continue;
 
-                        pbVar6[-2] = 1; // is visible
-                        pbVar6[0] = 1; // is mastered
-                        pbVar6[1] = 0; // is selected
+                    if (ability.ability_id == candidate) {
+                        ability.is_visible = true;
+                        ability.is_mastered = true;
+                        ability.is_selected = false;
                         break;
                     }
-                    iVar2 = iVar2 + 1;
-                } while (iVar2 < local_c);
+                }
             }
-            pbVar6 = pbVar6 + 0x10; //AbilityListDataAbility struct size
-            iVar2 = iVar5 + -1;
+        }
 
-            if (iVar2 == 0)
-            {
-                iVar4 = 0;
-                iVar5 = iVar5 + 0xf;
-                iVar2 = 0;
-                do
-                {
-                    iVar4 = iVar4 + *(int*)(pbVar9 + 10);
-                    if (*pbVar9 == 1)
-                    {
-                        iVar2 = iVar2 + *(int*)(pbVar9 + 6);
-                    }
-                    pbVar9 = pbVar9 + 0x10;
-                    iVar5 = iVar5 + -1;
-                } while (iVar5 != 0);
+        // --- Final: sum AP, compute completion percentage ---
+        int totalNeeded = 0;
+        int totalMasteredCurrent = 0;
 
-
-                if ((iVar2 == 0) || (iVar4 == 0))
-                {
-                    local_10[2] = 0;
-                }
-                else if (local_10[1] == 0x5002)
-                {
-                    local_10[2] = (uint)((iVar2 * 0x54) / iVar4);
-
-                    //uint* DAT_11bd420 = FhUtil.ptr_at<uint>(0xdbd420);
-                    //pbVar6 = &DAT_011bd420;
-                    pbVar6 = FhUtil.ptr_at<byte>(0xdbd420);
-
-
-                    /*
-                    byte* start_ptr = FhUtil.ptr_at<byte>(0xdbd420);
-                    byte* end_ptr  = FhUtil.ptr_at<byte>(0xdbd520);
-
-                    for (byte* pcVar5 = start_ptr; pcVar5 < end_ptr; pcVar5 += 0x40) {
-                        if (pcVar5[-0x20] == 1) { local_10[2]++; }
-                        if (pcVar5[-0x10] == 1) { local_10[2]++; }
-                        if (pcVar5[0x00] == 1)  { local_10[2]++; }
-                        if (pcVar5[0x10] == 1)  { local_10[2]++; }
-                    }*/
-                    
-                    do
-                    {
-                        if (pbVar6[-0x20] == 1)
-                        {
-                            local_10[2] = local_10[2] + 1;
-                        }
-                        if (pbVar6[-0x10] == 1)
-                        {
-                            local_10[2] = local_10[2] + 1;
-                        }
-                        if (*pbVar6 == 1)
-                        {
-                            local_10[2] = local_10[2] + 1;
-                        }
-                        if (pbVar6[0x10] == 1)
-                        {
-                            local_10[2] = local_10[2] + 1;
-                        }
-                        pbVar6 = pbVar6 + 0x40;
-                    } while ((int)pbVar6 < 0x11bd520);
-                    
-                }
-                else
-                {
-                    local_10[2] = (uint)((iVar2 * 100) / iVar4);
-                }
-
-                /*
-                if (99 < (int)local_10[2])
-                {
-                    achievementUnlockAchievement(0xe);
-                }*/
-                return;
+        for (int k = 0; k < 16; k++) {
+            ref DSAbilityListDataAbility _ability = ref abi_list_table[job_num].Abilities[k];
+            totalNeeded += (int)_ability.ap_needed;
+            if (_ability.is_mastered) {
+                totalMasteredCurrent += (int)_ability.ap_current;
             }
-        } while (true);
+        }
+
+        if (totalMasteredCurrent == 0 || totalNeeded == 0) {
+            abi_list_table[job_num].percentage = 0;
+        }
+        else if (abi_list_table[job_num].ds_id == 0x5002) {
+            abi_list_table[job_num].percentage = (totalMasteredCurrent * 0x54) / totalNeeded;
+
+            byte* scanPtr = FhUtil.ptr_at<byte>(0xdbd420);
+            byte* scanEnd = FhUtil.ptr_at<byte>(0xdbd520);
+
+            while (scanPtr < scanEnd) {
+                if (scanPtr[-0x20] == 1) abi_list_table[job_num].percentage++;
+                if (scanPtr[-0x10] == 1) abi_list_table[job_num].percentage++;
+                if (scanPtr[0x00] == 1) abi_list_table[job_num].percentage++;
+                if (scanPtr[0x10] == 1) abi_list_table[job_num].percentage++;
+                scanPtr += 0x40;
+            }
+        }
+        else {
+            abi_list_table[job_num].percentage = (totalMasteredCurrent * 100) / totalNeeded;
+        }
 
         //_TOMenuMakeJobAbilityList_handle.orig_fptr.Invoke(param_1, param_2);
     }
+        
 
     // In Abilities Menu, job list - handles command window preview and auto abilities?
     // Also 16 x ability list
@@ -627,15 +584,20 @@ public partial class X2DSUnlimitModule : FhModule {
     public unsafe void h_FUN_777270(uint param_1) {
 
         uint uVar8 = *(uint*)(param_1 + 0x28);
+        //_logger.Info("Param_1 is: " + param_1.ToString("X"));
+
         if (uVar8 < 0x14) {
 
             uint* switch_data_777864 = FhUtil.ptr_at<uint>(0x377864);
 
             if ((switch_data_777864[uVar8] & 0xFFFF) == 0x762F) {
+
+                //_logger.Info("Param_1 is: " + param_1.ToString("X"));
+
                 // Intercept switch case -> user selects command to learn ( not mastered )
 
-                byte ds = FhUtil.get_at<byte>(0x12c0266);
-                byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
+                byte job_num = FhUtil.get_at<byte>(0x12c0266);
+                //byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
 
                 uint menu_chr_id = FhUtil.get_at<uint>(0x12c0270);
                 uint menu_job_id = FhUtil.get_at<uint>(0x12c0274);
@@ -648,7 +610,9 @@ public partial class X2DSUnlimitModule : FhModule {
                 h_TOMenuMakeJobAbilityList(menu_chr_id, menu_job_id);
                 h_TOMenuSetMacroCommandType(0, 1, 0);
 
-                DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+                //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+                DSAbilityListData* abi_list_data = ability_list_data_ptr;
+
                 uint abilityId = abi_list_data[job_num].Abilities[slot].ability_id;
                 uint uVar9 = (uint)h_TOBtlGetComName(abilityId);
 
@@ -661,12 +625,15 @@ public partial class X2DSUnlimitModule : FhModule {
             else if ((switch_data_777864[uVar8] & 0xFFFF) == 0x7587) {
                 // Intercept switch case -> user selects command to learn (already learned)
 
+                //_logger.Info("Param_1 is: " + param_1.ToString("X"));
+
                 int slot = *(int*)(param_1 + 0x5c) + *(short*)(param_1 + 0x4c) * 2;
 
-                byte ds = FhUtil.get_at<byte>(0x12c0266);
-                byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
+                byte job_num = FhUtil.get_at<byte>(0x12c0266);
+                //byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
 
-                DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+                //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+                DSAbilityListData* abi_list_data = ability_list_data_ptr;
                 ref DSAbilityListDataAbility ability = ref abi_list_data[job_num].Abilities[slot];
 
                 if (ability.ability_id == 0x300a) {
@@ -676,6 +643,17 @@ public partial class X2DSUnlimitModule : FhModule {
                     *(uint*)(param_1 + 0x28) = 0xd;
                     return;
                 }
+
+                /*
+          if (*(int *)(&DAT_011bb214 + iVar10 * 0x10 + (uint)(byte)(&DAT_00d63e78)[DAT_016c0266 * 2] * 0x110) == 0x300a) {
+          SndSepPlaySimple(0x80000001);
+          *(undefined2 *)(iVar4 + 0x2c) = *(undefined2 *)(iVar4 + 0x4c);
+          *(char *)(iVar4 + 0x48) = *(char *)(iVar4 + 0x48) + '\x01';
+          *(undefined4 *)(iVar4 + 0x28) = 0xd;
+          return;
+        }
+                 */
+
 
                 if (!ability.is_mastered) {
                     h_SndSepPlaySimple(0x8000000a);
@@ -696,12 +674,14 @@ public partial class X2DSUnlimitModule : FhModule {
     }
 
     public unsafe bool h_FUN_776EC0(uint param_1, int ability_slot) {
-        DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+        //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+        DSAbilityListData* abi_list_data = ability_list_data_ptr;
+
         byte ds = FhUtil.get_at<byte>(0x12c0266);
 
-        byte job_index = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds & 0xff];
+        //byte job_index = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds & 0xff];
 
-        DSAbilityListData* job = &abi_list_data[job_index];
+        DSAbilityListData* job = &abi_list_data[ds];
 
         return job->Abilities[ability_slot].is_visible;
     }
@@ -711,6 +691,11 @@ public partial class X2DSUnlimitModule : FhModule {
     /// </summary>
     public unsafe void h_FUN_778160(int param_1, int param_2, int param_3, int param_4)
     {
+
+        //_logger.Info("Param_1 is: " + param_1.ToString("X"));
+        //_logger.Info("Param_2 is: " + param_2.ToString("X"));
+        //_logger.Info("Param_3 is: " + param_3.ToString("X"));
+        //_logger.Info("Param_4 is: " + param_4.ToString("X"));
 
         int puVar1; // is a memory address
         uint uVar2;
@@ -779,12 +764,13 @@ public partial class X2DSUnlimitModule : FhModule {
 #region Ability Visibilty and Current Selection
             //Replaced table reference D63E78 with custom table
             byte ds = FhUtil.get_at<byte>(0x12c0266); // current dressphere ID
-            byte job_index = (byte)(CustomTOMenuStartJobAbilityWindow_DS_Table[ds] & 0xFF); // Derived Job Index
-            int job_offset = (int)job_index * 0x110;
+            //byte job_index = (byte)(CustomTOMenuStartJobAbilityWindow_DS_Table[ds] & 0xFF); // Derived Job Index
+            int job_offset = (int)ds * 0x110;
             int ability_index = (int)uVar2;
 
-            DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
-            DSAbilityListData* job = &abi_list_data[job_index];
+            //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+            DSAbilityListData* abi_list_data = ability_list_data_ptr;
+            DSAbilityListData* job = &abi_list_data[ds];
             DSAbilityListDataAbility* ability = &job->Abilities[ability_index];
 
 
@@ -830,10 +816,9 @@ public partial class X2DSUnlimitModule : FhModule {
                 double test_double = _offsetAdjust_Y(0xf) + local_30 - DAT_00cad868;
                 int test_double_as_int = (int)(test_double);
 
-                int DAT_011bb214_addr = (int)FhUtil.ptr_at<byte>(0xdbb214);
-
                 // Render Ability icon and Name
-                _TOMkpComIconNameClut(*(uint*)(DAT_011bb214_addr + ability_index * 0x10 + job_offset), param_2 + 6, test_double_as_int, 0); 
+                //_TOMkpComIconNameClut(*(uint*)(DAT_011bb214_addr + ability_index * 0x10 + job_offset), param_2 + 6, test_double_as_int, 0);
+                _TOMkpComIconNameClut(ability_list_data_ptr[ds].Abilities[ability_index].ability_id, param_2 + 6, test_double_as_int, 0);
                 _FFX2_Reset_UI_Scale();
 
 
@@ -927,6 +912,128 @@ public partial class X2DSUnlimitModule : FhModule {
         return;
 
     }
+
+    public unsafe uint h_TOMenuNextJobList() {
+        int iVar2 = 0;
+        byte current = 0;
+
+        while (true) {
+            current = FhUtil.get_at<byte>(0x12c0266);
+            current = (byte)(current + 1);
+            FhUtil.set_at<byte>(0x12c0266, current);
+
+            uint uVar1 = (uint)(sbyte)current & 0x8000001f;
+            if ((int)uVar1 < 0) {
+                uVar1 = (uVar1 - 1 | 0xffffffe0) + 1;
+            }
+
+            if (ability_list_data_ptr[uVar1].i0 == 1)
+                break;
+
+            iVar2++;
+            if (0x1f < iVar2) {
+                uint fallbackIdx = (uint)(sbyte)current & 0x8000001f;
+                if ((int)fallbackIdx < 0) {
+                    fallbackIdx = (fallbackIdx - 1 | 0xffffffe0) + 1;
+                }
+                FhUtil.set_at<byte>(0x12c0266, (byte)fallbackIdx);
+                return (uint)ability_list_data_ptr[fallbackIdx].ds_id;
+            }
+        }
+
+        uint finalIdx = (uint)(sbyte)current & 0x8000001f;
+        if ((int)finalIdx < 0) {
+            finalIdx = (finalIdx - 1 | 0xffffffe0) + 1;
+        }
+
+        FhUtil.set_at<byte>(0x12c0266, (byte)finalIdx);
+        return (uint)ability_list_data_ptr[finalIdx].ds_id;
+    }
+
+    public unsafe uint h_TOMenuPrevJobList() {
+        byte initial = FhUtil.get_at<byte>(0x12c0266);
+        FhUtil.set_at<byte>(0x12c0266, (byte)(initial + 0x20));
+
+        int iVar2 = 0;
+        byte current = 0; // will hold the last decremented value, needed after the loop
+
+        while (true) {
+            current = FhUtil.get_at<byte>(0x12c0266);
+            current = (byte)(current - 1);
+            FhUtil.set_at<byte>(0x12c0266, current); // write back every iteration
+
+            uint uVar1 = (uint)(sbyte)current & 0x8000001f;
+            if ((int)uVar1 < 0) {
+                uVar1 = (uVar1 - 1 | 0xffffffe0) + 1;
+            }
+
+            if (ability_list_data_ptr[uVar1].i0 == 1)
+                break;
+
+            iVar2++;
+            if (0x1f < iVar2) {
+                uint fallbackIdx = (uint)(sbyte)current & 0x8000001f;
+                if ((int)fallbackIdx < 0) {
+                    fallbackIdx = (fallbackIdx - 1 | 0xffffffe0) + 1;
+                }
+                FhUtil.set_at<byte>(0x12c0266, (byte)fallbackIdx);
+                return (uint)ability_list_data_ptr[fallbackIdx].ds_id;
+            }
+        }
+
+        uint finalIdx = (uint)(sbyte)current & 0x8000001f;
+        if ((int)finalIdx < 0) {
+            finalIdx = (finalIdx - 1 | 0xffffffe0) + 1;
+        }
+
+        FhUtil.set_at<byte>(0x12c0266, (byte)finalIdx);
+        return (uint)ability_list_data_ptr[finalIdx].ds_id;
+    }
+
+    public uint h_TOGetRomHelp(uint param_1) {
+        return _TOGetRomHelp_handle.orig_fptr.Invoke(param_1);
+    }
+
+    public void h_TkMenuSetHelpMessage(int param_1) {
+        _TkMenuSetHelpMessage_handle.orig_fptr.Invoke(param_1);
+    }
+
+    public unsafe void h_FUN_777C60(int param_1) {
+        sbyte rawIndex = *(sbyte*)(param_1 + 0x48);
+        uint uVar2 = (uint)Math.Max((int)rawIndex, 0);
+
+        byte limit = *(byte*)(param_1 + 0x45);
+        if (limit <= uVar2) {
+            uVar2 = (uint)(limit - 1);
+        }
+
+        uint helpResult = 0;
+
+        if (*(int*)(param_1 + 0x98) != 0) {
+            byte ds = FhUtil.get_at<byte>(0x12c0266);
+            DSAbilityListData* abi_list_data = ability_list_data_ptr;
+            uint job_num = ds;
+
+            int rowOffset = *(int*)(param_1 + 0x5c + uVar2 * 4);
+            short cursorOffset = *(short*)(param_1 + 0x4c);
+            int slot = rowOffset + cursorOffset * 2;
+
+            ref DSAbilityListDataAbility ability = ref abi_list_data[job_num].Abilities[slot];
+
+            if (ability.is_visible) {
+                helpResult = h_TOGetRomHelp(ability.ability_id);
+            }
+            // else helpResult stays 0
+        }
+        // if [param_1+0x98] == 0, helpResult also stays 0
+
+        if (*(sbyte*)(param_1 + 0x48) < 0) {
+            return; // early exit, TkMenuSetHelpMessage never called
+        }
+
+        h_TkMenuSetHelpMessage((int)helpResult);
+    }
+
 }
 
 

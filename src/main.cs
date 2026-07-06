@@ -14,8 +14,8 @@ public partial class X2DSUnlimitModule : FhModule {
     private unsafe Job* paine_leblancgoon_ptr;
 
     // Move ability list data into Native alloc - adding new Dresspheres can overwrite data (Blue Bullet)
-    private unsafe DSAbilityListData* ability_list_ptr;
-    private const int ability_list_count = 32;
+    private unsafe DSAbilityListData* ability_list_data_ptr;
+    private const int ability_list_count = 100;
 
     // Local state / save state
     public static byte   freelancer_quantity = 0;
@@ -127,6 +127,20 @@ public partial class X2DSUnlimitModule : FhModule {
         _FUN_776EC0_handle = new FhMethodHandle<FUN_776EC0>(this, "FFX-2.exe", 0x776EC0 - addr_offset, h_FUN_776EC0);
         _FUN_777270_handle = new FhMethodHandle<FUN_777270>(this, "FFX-2.exe", 0x777270 - addr_offset, h_FUN_777270);
 
+        // abilites menu - job list percentage
+        _TOMenuGetJobLearnedRate_handle = new FhMethodHandle<TOMenuGetJobLearnedRate>(this, "FFX-2.exe", 0x7786b0 - addr_offset, h_TOMenuGetJobLearnedRate);
+
+        // abilities menu - make Blue Bullet list show up again fix
+        _FUN_00778680_handle = new FhMethodHandle<FUN_00778680>(this, "FFX-2.exe", 0x778680 - addr_offset, h_FUN_00778680);
+
+        // abilities menu - TOMenuNextJobList or TOMenuPrevJobList
+        _TOMenuNextJobList_handle = new FhMethodHandle<TOMenuNextJobList>(this, "FFX-2.exe", 0x778CD0 - addr_offset, h_TOMenuNextJobList);
+        _TOMenuPrevJobList_handle = new FhMethodHandle<TOMenuPrevJobList>(this, "FFX-2.exe", 0x778E80 - addr_offset, h_TOMenuPrevJobList);
+
+        _FUN_777C60_handle = new FhMethodHandle<FUN_777C60>(this, "FFX-2.exe", 0x777C60 - addr_offset, h_FUN_777C60);
+        _TkMenuSetHelpMessage_handle = new FhMethodHandle<TkMenuSetHelpMessage>(this, "FFX-2.exe", 0x765B20 - addr_offset, h_TkMenuSetHelpMessage);
+        _TOGetRomHelp_handle = new FhMethodHandle<TOGetRomHelp>(this, "FFX-2.exe", 0x794500 - addr_offset, h_TOGetRomHelp);
+
         // FUN_777270 sub functions, 16x ability list functionality
         _TOMenuSetSaveLearn_handle = new FhMethodHandle<TOMenuSetSaveLearn>(this, "FFX-2.exe", 0x778f40 - addr_offset, h_TOMenuSetSaveLearn);
         _TOMenuSetMacroCommandType_handle = new FhMethodHandle<TOMenuSetMacroCommandType>(this, "FFX-2.exe", 0x796330 - addr_offset, h_TOMenuSetMacroCommandType);
@@ -182,7 +196,6 @@ public partial class X2DSUnlimitModule : FhModule {
         _MsBtlChrGetMem_handle = new FhMethodHandle<MsBtlChrGetMem>(this, "FFX-2.exe", 0x60fe10 - addr_offset, h_MsBtlChrGetMem);
         // overwrite voiceline integers in system_01.bin - largely for commands
         _TOCtrlATBChr_handle = new FhMethodHandle<TOCtrlATBChr>(this, "FFX-2.exe", 0x75e2c0 - addr_offset, h_TOCtrlATBChr);
-
         #endregion MethodHandles
 
         // malloc for C# defined jobs and initialisation
@@ -193,7 +206,7 @@ public partial class X2DSUnlimitModule : FhModule {
         InitNewJobs();
 
         // malloc region for Ability List data - 16x abilites window
-        ability_list_ptr = (DSAbilityListData*)NativeMemory.AllocZeroed((nuint)(sizeof(DSAbilityListData) * ability_list_count));
+        ability_list_data_ptr = (DSAbilityListData*)NativeMemory.AllocZeroed((nuint)(sizeof(DSAbilityListData) * ability_list_count));
     }
 
     public int h_MsGetChr(uint chr_id) {
@@ -327,6 +340,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 ushort* DAT_00e05de0 = FhUtil.ptr_at<ushort>(0xa05de0);
 
                 *(ushort*)((int)(DAT_00e05de0) + (job_num + chr_num * 0x1e) * 2) = ability_id;
+ // get: return *(ushort*)((int)(DAT_00e05de0) + (job_num + chr_num * 0x1e) * 2);
                 //return 0xffffffff;
                 return -1;
             }
@@ -547,6 +561,16 @@ public partial class X2DSUnlimitModule : FhModule {
 
             && _MsBtlChrGetMem_handle.hook()
             && _TOCtrlATBChr_handle.hook()
+
+            && _TOMenuGetJobLearnedRate_handle.hook()
+            && _FUN_00778680_handle.hook()
+
+            && _TOMenuNextJobList_handle.hook()
+            && _TOMenuPrevJobList_handle.hook()
+
+            && _FUN_777C60_handle.hook()
+            && _TOGetRomHelp_handle.hook()
+            && _TkMenuSetHelpMessage_handle.hook()
 
             && _FUN_778160_handle.hook()
             && _FUN_776EC0_handle.hook()

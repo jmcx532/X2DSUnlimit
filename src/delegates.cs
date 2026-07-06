@@ -116,7 +116,7 @@ public partial class X2DSUnlimitModule : FhModule
     // from abilities_menu.cs
     // Main delegate 1
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public unsafe delegate int MsGetJobAbilityList(int param_1, int param_2, int* param_3, int param_4);
+    public unsafe delegate int MsGetJobAbilityList(int chr_id, int job_id, int* param_3, int param_4);
     private readonly FhMethodHandle<MsGetJobAbilityList> _MsGetJobAbilityList_handle;//629af0
 
     //sub-function delegates
@@ -310,6 +310,34 @@ public partial class X2DSUnlimitModule : FhModule
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void FUN_778160(int param_1, int param_2, int param_3, int param_4);
     private readonly FhMethodHandle<FUN_778160> _FUN_778160_handle;//778160
+
+    // ABilities - Job List percentage rendering
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint TOMenuGetJobLearnedRate(uint param_1, uint job_id);
+    private readonly FhMethodHandle<TOMenuGetJobLearnedRate> _TOMenuGetJobLearnedRate_handle;//7786b0
+
+    // Abilities menu - misc 1, returns a dressphere ID - TOMenuNextJobList or TOMenuPrevJobList
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint TOMenuNextJobList();
+    private readonly FhMethodHandle<TOMenuNextJobList> _TOMenuNextJobList_handle;//778CD0
+
+    // Abilities menu - misc 2, returns a dressphere ID - TOMenuNextJobList or TOMenuPrevJobList
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint TOMenuPrevJobList();
+    private readonly FhMethodHandle<TOMenuPrevJobList> _TOMenuPrevJobList_handle;//778E80
+
+    //  // Abilities menu - misc 3
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_777C60(int param_1);
+    private readonly FhMethodHandle<FUN_777C60> _FUN_777C60_handle;//777C60
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint TOGetRomHelp(uint param_1);
+    private readonly FhMethodHandle<TOGetRomHelp> _TOGetRomHelp_handle;//794500
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TkMenuSetHelpMessage(int param_1);
+    private readonly FhMethodHandle<TkMenuSetHelpMessage> _TkMenuSetHelpMessage_handle; //765b20
 
     // thunk at 87d984
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

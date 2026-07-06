@@ -85,6 +85,8 @@ public partial class X2DSUnlimitModule : FhModule
 
     public unsafe override void render_imgui()
     {
+        /*
+
         //base.render_imgui();
         uint show_job_ability_list = FhUtil.get_at<uint>(0x12c0260); // flag which is 1 when viewing a dressphere's abilities in the Abilities Menu
         byte job_number = FhUtil.get_at<byte>(0x12c0266);// the dressphere ID number which is being viewed / was last viewed.
@@ -235,7 +237,7 @@ public partial class X2DSUnlimitModule : FhModule
                 //ImGui.PopStyleColor(1);
             }
         }
-
+        */
     }
 
 }
