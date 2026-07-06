@@ -914,7 +914,10 @@ public partial class X2DSUnlimitModule : FhModule {
     }
 
     public unsafe uint h_TOMenuNextJobList() {
-        int iVar2 = 0;
+        const uint wrapMask = 0x3f;      // widened from 0x1f (32 slots) to 0x3f (64 slots)
+        const int maxTries = 0x40;       // widened from 0x20 to match
+
+        int iterator = 0;
         byte current = 0;
 
         while (true) {
@@ -922,70 +925,50 @@ public partial class X2DSUnlimitModule : FhModule {
             current = (byte)(current + 1);
             FhUtil.set_at<byte>(0x12c0266, current);
 
-            uint uVar1 = (uint)(sbyte)current & 0x8000001f;
-            if ((int)uVar1 < 0) {
-                uVar1 = (uVar1 - 1 | 0xffffffe0) + 1;
-            }
+            uint uVar1 = (uint)current & wrapMask;
 
             if (ability_list_data_ptr[uVar1].i0 == 1)
                 break;
 
-            iVar2++;
-            if (0x1f < iVar2) {
-                uint fallbackIdx = (uint)(sbyte)current & 0x8000001f;
-                if ((int)fallbackIdx < 0) {
-                    fallbackIdx = (fallbackIdx - 1 | 0xffffffe0) + 1;
-                }
+            iterator++;
+            if (maxTries < iterator) {
+                uint fallbackIdx = (uint)current & wrapMask;
                 FhUtil.set_at<byte>(0x12c0266, (byte)fallbackIdx);
                 return (uint)ability_list_data_ptr[fallbackIdx].ds_id;
             }
         }
 
-        uint finalIdx = (uint)(sbyte)current & 0x8000001f;
-        if ((int)finalIdx < 0) {
-            finalIdx = (finalIdx - 1 | 0xffffffe0) + 1;
-        }
-
+        uint finalIdx = (uint)current & wrapMask;
         FhUtil.set_at<byte>(0x12c0266, (byte)finalIdx);
         return (uint)ability_list_data_ptr[finalIdx].ds_id;
     }
 
     public unsafe uint h_TOMenuPrevJobList() {
-        byte initial = FhUtil.get_at<byte>(0x12c0266);
-        FhUtil.set_at<byte>(0x12c0266, (byte)(initial + 0x20));
+        const uint wrapMask = 0x3f;
+        const int maxTries = 0x40;
 
-        int iVar2 = 0;
-        byte current = 0; // will hold the last decremented value, needed after the loop
+        int iterator = 0;
+        byte current = 0;
 
         while (true) {
             current = FhUtil.get_at<byte>(0x12c0266);
             current = (byte)(current - 1);
-            FhUtil.set_at<byte>(0x12c0266, current); // write back every iteration
+            FhUtil.set_at<byte>(0x12c0266, current);
 
-            uint uVar1 = (uint)(sbyte)current & 0x8000001f;
-            if ((int)uVar1 < 0) {
-                uVar1 = (uVar1 - 1 | 0xffffffe0) + 1;
-            }
+            uint uVar1 = (uint)current & wrapMask;
 
             if (ability_list_data_ptr[uVar1].i0 == 1)
                 break;
 
-            iVar2++;
-            if (0x1f < iVar2) {
-                uint fallbackIdx = (uint)(sbyte)current & 0x8000001f;
-                if ((int)fallbackIdx < 0) {
-                    fallbackIdx = (fallbackIdx - 1 | 0xffffffe0) + 1;
-                }
+            iterator++;
+            if (maxTries < iterator) {
+                uint fallbackIdx = (uint)current & wrapMask;
                 FhUtil.set_at<byte>(0x12c0266, (byte)fallbackIdx);
                 return (uint)ability_list_data_ptr[fallbackIdx].ds_id;
             }
         }
 
-        uint finalIdx = (uint)(sbyte)current & 0x8000001f;
-        if ((int)finalIdx < 0) {
-            finalIdx = (finalIdx - 1 | 0xffffffe0) + 1;
-        }
-
+        uint finalIdx = (uint)current & wrapMask;
         FhUtil.set_at<byte>(0x12c0266, (byte)finalIdx);
         return (uint)ability_list_data_ptr[finalIdx].ds_id;
     }
