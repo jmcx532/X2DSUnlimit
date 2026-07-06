@@ -15,7 +15,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
     // Move ability list data into Native alloc - adding new Dresspheres can overwrite data (Blue Bullet)
     private unsafe DSAbilityListData* ability_list_data_ptr;
-    private const int ability_list_count = 100;
+    private const int ability_list_count = 255;
 
     // Local state / save state
     public static byte   freelancer_quantity = 0;

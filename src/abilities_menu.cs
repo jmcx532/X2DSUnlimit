@@ -914,63 +914,68 @@ public partial class X2DSUnlimitModule : FhModule {
     }
 
     public unsafe uint h_TOMenuNextJobList() {
-        const uint wrapMask = 0x3f;      // widened from 0x1f (32 slots) to 0x3f (64 slots)
-        const int maxTries = 0x40;       // widened from 0x20 to match
-
-        int iterator = 0;
+        int attempts = 0;
         byte current = 0;
 
         while (true) {
+
+            //get current dressphere id, increment and set
             current = FhUtil.get_at<byte>(0x12c0266);
             current = (byte)(current + 1);
             FhUtil.set_at<byte>(0x12c0266, current);
 
-            uint uVar1 = (uint)current & wrapMask;
+            uint slot = (uint)current % ability_list_count;
 
-            if (ability_list_data_ptr[uVar1].i0 == 1)
+            // if valid Dressphere/Ability data , break out of loop
+            if (ability_list_data_ptr[slot].i0 == 1)
                 break;
 
-            iterator++;
-            if (maxTries < iterator) {
-                uint fallbackIdx = (uint)current & wrapMask;
-                FhUtil.set_at<byte>(0x12c0266, (byte)fallbackIdx);
-                return (uint)ability_list_data_ptr[fallbackIdx].ds_id;
+            
+            attempts++;
+            // fallback
+            if (attempts > ability_list_count) {
+                uint fallback_slot = (uint)current % ability_list_count;
+                FhUtil.set_at<byte>(0x12c0266, (byte)fallback_slot);
+                return (uint)ability_list_data_ptr[fallback_slot].ds_id;
             }
         }
 
-        uint finalIdx = (uint)current & wrapMask;
-        FhUtil.set_at<byte>(0x12c0266, (byte)finalIdx);
-        return (uint)ability_list_data_ptr[finalIdx].ds_id;
+        // if valid ability data, set and return
+        uint final_slot = (uint)current % ability_list_count;
+        FhUtil.set_at<byte>(0x12c0266, (byte)final_slot);
+        return (uint)ability_list_data_ptr[final_slot].ds_id;
     }
 
     public unsafe uint h_TOMenuPrevJobList() {
-        const uint wrapMask = 0x3f;
-        const int maxTries = 0x40;
-
-        int iterator = 0;
+        int attempts = 0;
         byte current = 0;
 
         while (true) {
+
+            //get current dressphere id, deccrement and set
             current = FhUtil.get_at<byte>(0x12c0266);
             current = (byte)(current - 1);
             FhUtil.set_at<byte>(0x12c0266, current);
 
-            uint uVar1 = (uint)current & wrapMask;
+            uint slot = (uint)current % ability_list_count;
 
-            if (ability_list_data_ptr[uVar1].i0 == 1)
+            // if valid Dressphere/Ability data , break out of loop
+            if (ability_list_data_ptr[slot].i0 == 1)
                 break;
 
-            iterator++;
-            if (maxTries < iterator) {
-                uint fallbackIdx = (uint)current & wrapMask;
-                FhUtil.set_at<byte>(0x12c0266, (byte)fallbackIdx);
-                return (uint)ability_list_data_ptr[fallbackIdx].ds_id;
+            attempts++;
+            // fallback
+            if (attempts > ability_list_count) {
+                uint fallbackSlot = (uint)current % ability_list_count;
+                FhUtil.set_at<byte>(0x12c0266, (byte)fallbackSlot);
+                return (uint)ability_list_data_ptr[fallbackSlot].ds_id;
             }
         }
 
-        uint finalIdx = (uint)current & wrapMask;
-        FhUtil.set_at<byte>(0x12c0266, (byte)finalIdx);
-        return (uint)ability_list_data_ptr[finalIdx].ds_id;
+        // if valid ability data, set and return
+        uint finalSlot = (uint)current % ability_list_count;
+        FhUtil.set_at<byte>(0x12c0266, (byte)finalSlot);
+        return (uint)ability_list_data_ptr[finalSlot].ds_id;
     }
 
     public uint h_TOGetRomHelp(uint param_1) {
