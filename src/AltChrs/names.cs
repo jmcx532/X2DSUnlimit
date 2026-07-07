@@ -17,6 +17,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
 
         Span<byte> party_name_buffer = new Span<byte>(party_name_base, 40);
+
         ReadOnlySpan<byte> name = character_name switch
             {
                 CharName.Yuna    => "Yuna"u8,
@@ -27,6 +28,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 CharName.Seymour => "Seymour"u8,
                 _                => "Yuna"u8
             };
+
         party_name_buffer.Clear();
         FhEncoding.encode(name, party_name_buffer);
 
@@ -107,19 +109,18 @@ public partial class X2DSUnlimitModule : FhModule {
         HandleCustomCharacterName(chr_id, job_id);
 
         return (uint)(string_table_base + name_string_pointer); // memory address, start of null terminated byte string
-
     }
 
 
     /// <summary>
     /// Reimplementations so job help string is read correctly from job.bin for C# defined jobs
-    /// TOMenuSetHelpMes is run by FUN_5e59B0 and it takes a memory address of a null terminated byte string as a parameter.
+    /// TOMenuSetHelpMes is run by kySetHelpJob2 and it takes a memory address of a null terminated byte string as a parameter.
     /// </summary>
     public void h_TOMenuSetHelpMes(int addr_of_txt_bytes) {
         _TOMenuSetHelpMes_handle.orig_fptr.Invoke(addr_of_txt_bytes);
     }
 
-    public unsafe void h_FUN_5E59B0(uint job_id) {
+    public unsafe void h_kySetHelpJob2(uint job_id) {
         if (0x5020 <= job_id) {
 
             int job_bin_base = FhUtil.get_at<int>(0x9f9188); // memory address of job.bin
@@ -144,7 +145,7 @@ public partial class X2DSUnlimitModule : FhModule {
             h_TOMenuSetHelpMes(string_table_base + help_string_offset);
         }
         else {
-            _FUN_5E59B0_handle.orig_fptr.Invoke(job_id);
+            _kySetHelpJob2_handle.orig_fptr.Invoke(job_id);
         }
     }
 

@@ -6,14 +6,12 @@
 /// 
 /// These hooks fix this issue.
 /// </summary>
-
-
 public partial class X2DSUnlimitModule : FhModule {
 
-    // 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate DSAbilityListDataAbilityArray* FUN_00778680();
     private readonly FhMethodHandle<FUN_00778680> _FUN_00778680_handle; //778680
+
 
     public unsafe DSAbilityListDataAbilityArray* h_FUN_00778680() {
 

@@ -1,5 +1,4 @@
-﻿using Fahrenheit.FFX2;
-
+﻿
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
 public partial class X2DSUnlimitModule : FhModule
@@ -57,7 +56,6 @@ public partial class X2DSUnlimitModule : FhModule
     public delegate int MsCheckRange(int number, int lower_bound, int upper_bound);//624cd0
     private readonly FhMethodHandle<MsCheckRange> _MsCheckRange_handle;
 
-
     // these functions were hooked for debug/RE purposes - 08.06.26
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint MsGetSavePlate(uint param_1);
@@ -79,12 +77,11 @@ public partial class X2DSUnlimitModule : FhModule
     public delegate int kySetDefPlateWindow(short param_1, short param_2, int param_3, int param_4, int param_5);
     private readonly FhMethodHandle<kySetDefPlateWindow> _kySetDefPlateWindow_handle;//5e5550
 
-    //test hook of a void fx(void) thst has been reduced mostly to _aullshr()
+
+    // delegates
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint kyIsUsedPoint(uint param_1, uint param_2);
     private readonly FhMethodHandle<kyIsUsedPoint> _kyIsUsedPoint_handle;// 5eb9e0
-
-
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void TOMenuMakeJobList(int param_1);
@@ -96,12 +93,7 @@ public partial class X2DSUnlimitModule : FhModule
     //private memset _memset = FhUtil.get_fptr<memset>(0x47dd24);
     private readonly FhMethodHandle<memset> _memset_handle; //87dd24
 
-    /*
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void TOMenuMakeJobAbilityList(uint param_1, uint param_2);
-    private TOMenuMakeJobAbilityList _TOMenuMakeJobAbilityList = FhUtil.get_fptr<TOMenuMakeJobAbilityList>(0x3788d0);//7788d0
 
-    */
     // Main delegate 2
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void TOMenuMakeJobAbilityList(uint param_1, uint param_2);
@@ -109,9 +101,8 @@ public partial class X2DSUnlimitModule : FhModule
 
     // GG Icon fix for LG/Freelancer
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_5E7580(int param_1, int param_2, int icon, uint param_4);
-    private readonly FhMethodHandle<FUN_5E7580> _FUN_5E7580_handle; //5e7580
-
+    public delegate void kyAddPoint3D(int param_1, int param_2, int icon, uint param_4);
+    private readonly FhMethodHandle<kyAddPoint3D> _kyAddPoint3D_handle; //5e7580
 
     // from abilities_menu.cs
     // Main delegate 1
@@ -238,8 +229,8 @@ public partial class X2DSUnlimitModule : FhModule
 
     // C# defined job help string crash prevention
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_5E59B0(uint job_id);
-    private readonly FhMethodHandle<FUN_5E59B0> _FUN_5E59B0_handle;//5E59B0
+    public delegate void kySetHelpJob2(uint job_id);
+    private readonly FhMethodHandle<kySetHelpJob2> _kySetHelpJob2_handle;//5E59B0
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void TOMenuSetHelpMes(int addr_of_txt_bytes);

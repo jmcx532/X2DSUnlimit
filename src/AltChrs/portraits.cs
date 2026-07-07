@@ -13,28 +13,28 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // Freelancer Replacements
         if (chr_id == 0 && job_id == 0x5020) {
-            return 261;
+            return 261; // Kimahri
         }
 
         if (chr_id == 1 && job_id == 0x5020) {
-            return 263;
+            return 263; // Tidus
         }
 
         if (chr_id == 2 && job_id == 0x5020) {
-            return 264;
+            return 264; // Seymour
         }
 
         // Leblanc Goon Replacements
         if (chr_id == 0 && job_id == 0x5021) {
-            return 261;
+            return 261; // Kimahri
         }
 
         if (chr_id == 1 && job_id == 0x5021) {
-            return 263;
+            return 263; // Tidus
         }
 
         if (chr_id == 2 && job_id == 0x5021) {
-            return 264;
+            return 264; // Seymour
         }
 
         return _TOGetFaceIndex2_handle.orig_fptr.Invoke(chr_id, job_id); // forces return of 0x52 which removes all portrait images

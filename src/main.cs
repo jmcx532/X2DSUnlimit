@@ -1,6 +1,4 @@
 ﻿
-using static Fahrenheit.Mods.X2DSUnlimit.X2DSUnlimitModule;
-
 namespace Fahrenheit.Mods.X2DSUnlimit;
 
 [FhLoad(FhGameId.FFX2)]
@@ -17,6 +15,7 @@ public partial class X2DSUnlimitModule : FhModule {
     private unsafe DSAbilityListData* ability_list_data_ptr;
     private const int ability_list_count = 255;
 
+    #region LocalState
     // Local state / save state
     public static byte   freelancer_quantity = 0;
     public static byte   leblanc_goon_quantity = 0;
@@ -44,20 +43,24 @@ public partial class X2DSUnlimitModule : FhModule {
             this.freelancer_quantity = X2DSUnlimitModule.freelancer_quantity;
             this.leblanc_goon_quantity = X2DSUnlimitModule.leblanc_goon_quantity;
 
-            this.y_freelancer_ability_learning  = X2DSUnlimitModule.y_freelancer_ability_learning;
-            this.y_leblancgoon_ability_learning = X2DSUnlimitModule.y_leblancgoon_ability_learning;
+            this.y_freelancer_ability_learning = X2DSUnlimitModule.y_freelancer_ability_learning;
             this.r_freelancer_ability_learning = X2DSUnlimitModule.r_freelancer_ability_learning;
-            this.r_leblancgoon_ability_learning = X2DSUnlimitModule.r_leblancgoon_ability_learning;
             this.p_freelancer_ability_learning = X2DSUnlimitModule.p_freelancer_ability_learning;
+
+            this.y_leblancgoon_ability_learning = X2DSUnlimitModule.y_leblancgoon_ability_learning;
+            this.r_leblancgoon_ability_learning = X2DSUnlimitModule.r_leblancgoon_ability_learning;
             this.p_leblancgoon_ability_learning = X2DSUnlimitModule.p_leblancgoon_ability_learning;
         }
     }
+    #endregion LocalState
 
     /// <summary>
     /// Table replacements
     /// Freelancer/Leblanc Goon ID's appended to mod copt of DAT_00D63e78 table (ffx-2.exe + 0x963e78)
     /// TOMsJobAbilityWindow+ and other functions (many)
     /// </summary>
+    /// 
+    /* Superseded, reworked, using native allocation, simplified, skipping table lookup step
     private static readonly ushort[] CustomTOMenuStartJobAbilityWindow_DS_Table =
 {
     0x5000, 0x5001, 0x5002, 0x5003, 0x5004,
@@ -67,9 +70,9 @@ public partial class X2DSUnlimitModule : FhModule {
     0x501e, 0x501f, 0x501c, 0x500f, 0x5010, 
     0x5011, 0x5012, 0x5013, 0x5014, 0x5015, 
     0x5016, 0x5017, 0x5020, 0x5021
-};
+};*/
 
-    //replaces lookup table at: ffx-2.exe + cc36cc, used by the kyGetJobNum series of functions and kyGetUsedPoint ONLY.
+    //replaces lookup table at: ffx-2.exe + cc36cc, used by the kyGetJobNum series of functions and kyGetUsedPoint ONLY?.
     private static readonly ushort[] CustomDsLookupTable =
 {
     0x0001, 0x0002, 0x0003, 0x0004, 0x0005,
@@ -96,7 +99,7 @@ public partial class X2DSUnlimitModule : FhModule {
         _kyGetJobNum_handle = new FhMethodHandle<kyGetJobNum>(this, "FFX-2.exe", 0x5ea7b0 - addr_offset, h_kyGetJobNum);
 
         // garment grid icons
-        _FUN_5E7580_handle = new FhMethodHandle<FUN_5E7580>(this, "FFX-2.exe", 0x5e7580 - addr_offset, h_FUN_5E7580);
+        _kyAddPoint3D_handle = new FhMethodHandle<kyAddPoint3D>(this, "FFX-2.exe", 0x5e7580 - addr_offset, h_kyAddPoint3D);
 
         //__aullshr() functions
         _MsGetSavePlate_handle = new FhMethodHandle<MsGetSavePlate>(this, "FFX-2.exe", 0x60cc00 - addr_offset, h_MsGetSavePlate);
@@ -123,6 +126,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
         // 16x Ability list - Rendering function
         _FUN_778160_handle = new FhMethodHandle<FUN_778160>(this, "FFX-2.exe", 0x778160 - addr_offset, h_FUN_778160);// ability, ap rendering
+        
         // 16x Ability list - Make Freelancer and Leblanc Goon functional
         _FUN_776EC0_handle = new FhMethodHandle<FUN_776EC0>(this, "FFX-2.exe", 0x776EC0 - addr_offset, h_FUN_776EC0);
         _FUN_777270_handle = new FhMethodHandle<FUN_777270>(this, "FFX-2.exe", 0x777270 - addr_offset, h_FUN_777270);
@@ -173,7 +177,7 @@ public partial class X2DSUnlimitModule : FhModule {
         _TOGetSaveJobName_handle = new FhMethodHandle<TOGetSaveJobName>(this, "FFX-2.exe", 0x794600 - addr_offset, h_TOGetSaveJobName);
         _MsGetSaveJob_handle = new FhMethodHandle<MsGetSaveJob>(this, "FFX-2.exe", 0x60c950 - addr_offset, h_MsGetSaveJob);
         //help string - stop crashes with C# defined Jobs
-        _FUN_5E59B0_handle = new FhMethodHandle<FUN_5E59B0>(this, "FFX-2.exe", 0x5e59b0 - addr_offset, h_FUN_5E59B0);
+        _kySetHelpJob2_handle = new FhMethodHandle<kySetHelpJob2>(this, "FFX-2.exe", 0x5e59b0 - addr_offset, h_kySetHelpJob2);
         _TOMenuSetHelpMes_handle = new FhMethodHandle<TOMenuSetHelpMes>(this, "FFX-2.exe", 0x763970 - addr_offset, h_TOMenuSetHelpMes);
 
         //AltChr handles
@@ -216,7 +220,6 @@ public partial class X2DSUnlimitModule : FhModule {
     public uint h_MsGetSaveJob(uint chr_id) {
         return _MsGetSaveJob_handle.orig_fptr.Invoke(chr_id);
     }
-
     public int h_MsBtlPlayerSaveNumCheck(byte p1)
     {
         return _MsBtlPlayerSaveNumCheck_handle.orig_fptr.Invoke(p1);
@@ -329,7 +332,6 @@ public partial class X2DSUnlimitModule : FhModule {
         uint chr_num;
         int is_plyChr;
 
-
         chr_num = h_MsGetChrNum(chr_id);
         is_plyChr = h_MsBtlPlayerSaveNumCheck((byte)chr_num);
         if (is_plyChr != 0)
@@ -338,10 +340,7 @@ public partial class X2DSUnlimitModule : FhModule {
             if (job_num< 0x1e) // vanilla
             {
                 ushort* DAT_00e05de0 = FhUtil.ptr_at<ushort>(0xa05de0);
-
                 *(ushort*)((int)(DAT_00e05de0) + (job_num + chr_num * 0x1e) * 2) = ability_id;
- // get: return *(ushort*)((int)(DAT_00e05de0) + (job_num + chr_num * 0x1e) * 2);
-                //return 0xffffffff;
                 return -1;
             }
             else // FL/LG
@@ -385,13 +384,15 @@ public partial class X2DSUnlimitModule : FhModule {
         return _MsCheckRange_handle.orig_fptr.Invoke(number, lower_bound, upper_bound);
     }
 
-    /* job id is 0x50xx form
-     * returns the address where a X-2 Job is located.
-     * TOGetSaveJobName also uses this to get the Jobs string table pointer
-     * 
-     * Adds extra Job data for Rikku/Paine to allow for different stats/abilities
-     * 
-     */
+
+    /// <summary>
+    /// Adds functionality with extra Job data for Rikku/Paine to allow for different stats/abilities
+    /// TOGetSaveJobName also uses this to get the Jobs string table pointer
+    /// </summary>
+    /// <param name="chr_id"></param>
+    /// <param name="job_id"></param> - 0x50xx
+    /// <param name="out_data_end"></param>
+    /// <returns></returns>
     public unsafe Job* h_MsGetRomJob(uint chr_id, uint job_id, byte* out_data_end)
     {
         if(job_id == 0x5020) {
@@ -419,26 +420,24 @@ public partial class X2DSUnlimitModule : FhModule {
     // Used in Garment Grid Menu, necessary for Freelancer/Leblanc Goon to show up in Dressphere List
     public unsafe uint h_kyGetJobNum()
     {
-        int iVar1;
-        uint number_of_elements;
-        ushort* puVar2;
+        int isOwned;
+        uint ds_count;
         byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);
 
-        number_of_elements = 0;
-
+        ds_count = 0;
         for (int i = 0; i < CustomDsLookupTable.Length; i++)
         {
-            iVar1 = h_MsGetSaveDreSphere(CustomDsLookupTable[i]);
-            if (0 < iVar1)
+            isOwned = h_MsGetSaveDreSphere(CustomDsLookupTable[i]);
+            if (0 < isOwned)
             {
-                unique_ds_on_grid_list[number_of_elements] = (byte)CustomDsLookupTable[i];
-                number_of_elements++;
+                unique_ds_on_grid_list[ds_count] = (byte)CustomDsLookupTable[i];
+                ds_count++;
             }
         }
 
-        FhUtil.set_at<byte>(0x9f602c, (byte)number_of_elements);
+        FhUtil.set_at<uint>(0x9f602c, ds_count);
         //_logger.Info("Return result: " + number_of_elements.ToString());
-        return number_of_elements;
+        return ds_count;
     }
 
 
@@ -446,7 +445,6 @@ public partial class X2DSUnlimitModule : FhModule {
     //returns the owned quantity of a given dressphere
     public unsafe int h_MsGetSaveDreSphere(uint ds_id)
     {
-        
         if ((ds_id & 0xfff) > 0x1e) //Freelancer, Leblanc Goon handling
         {
             switch(ds_id & 0xfff)
@@ -521,13 +519,12 @@ public partial class X2DSUnlimitModule : FhModule {
             && _F791610_handle.hook()
             && _MsGetSavePlate_handle.hook()
             && _kyGetUsedPoint_handle.hook()
-            && _FUN_5E7580_handle.hook()
+            && _kyAddPoint3D_handle.hook()
             && _MsGetJobAbilityList_handle.hook()
             && _TOMenuMakeJobAbilityList_handle.hook()
             && _TOMenuStartJobAbilityWindow_handle.hook()
             && _MsGetSaveLearn_handle.hook()
             && _MsSetSaveLearn_handle.hook()
-
 
             && _MsGetChrNum_handle.hook()
             && _MsCalcChrLevel_handle.hook()
@@ -543,12 +540,10 @@ public partial class X2DSUnlimitModule : FhModule {
             && _MsGetJobNumBasic_handle.hook()
             && _MsBtlPlayerSaveNumCheck_handle.hook()
 
-
             && _TOGetSaveJobName_handle.hook()
             && _MsGetSaveJob_handle.hook()
-            && _FUN_5E59B0_handle.hook()
+            && _kySetHelpJob2_handle.hook()
             && _TOMenuSetHelpMes_handle.hook()
-
 
             && _MsGetChrID_handle.hook()
             && _MsSetRamMotionChrData_handle.hook()

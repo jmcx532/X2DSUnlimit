@@ -13,8 +13,11 @@ public partial class X2DSUnlimitModule : FhModule
         return _MsGetSavePlate_handle.orig_fptr.Invoke(param_1);
     }
 
-    // reads garment grid data, builds a list of unique IDs on grid, returns number of unique ds ids.
-    // safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
+    /// <summary>
+    /// Reads Garment Grid data, builds a list of unique dressphere IDs that are on the grid,.
+    ///  Safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
+    /// </summary>
+    /// <returns>Number of Unique dressphere IDs on current Garment Grid</returns>
     public unsafe int h_kyGetUsedPoint()
     {
 
@@ -52,92 +55,72 @@ public partial class X2DSUnlimitModule : FhModule
         return count;
     }
 
-    // takes a plate id and slot number, and returns the dressphere ID.
-    // safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
+    /// <summary>
+    /// Safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
+    /// </summary>
+    /// <param name="plate_id"></param>
+    /// <param name="gg_slot"></param>
+    /// <returns>Dressphere ID - in slot?</returns>
     public uint h_kyIsUsedPoint(uint plate_id, uint gg_slot)
     {
-        // uint original_result = _kyIsUsedPoint_handle.orig_fptr.Invoke(param_1, param_2);
-
-        //_logger.Info("kyIsUsedPoint param_1: " + plate_id.ToString());
-        //_logger.Info("kyIsUsedPoint param_2: " + gg_slot.ToString());
-
-        uint ds_id = _kyIsUsedPoint_handle.orig_fptr.Invoke(plate_id, gg_slot);
-        //_logger.Info("kyIsUsedPoint returning: " + ds_id.ToString());
-        return ds_id;
+        return _kyIsUsedPoint_handle.orig_fptr.Invoke(plate_id, gg_slot);
     }
 
-    // takes a chr_id and a Garment Grid ID, and returns which slot their equipped/highlighted? dressphere is in.
-    // safety hook, this function reads game memory, messing with dressphere IDs (Freelancer/LG) in Garment Grid data can produce bad reads and crash the game
+    /// <summary>
+    /// Safety hook, this function reads game memory, messing with dressphere IDs (Freelancer/LG) in Garment Grid data can produce bad reads and crash the game
+    /// </summary>
+    /// <param name="chr_id"></param>
+    /// <param name="plate_id"></param>
+    /// <returns>Slot ID containing the character's current equipped/highlighted Dressphere</returns>
     public byte h_kyGetCursorPoint(int chr_id, int plate_id)
     {
-        //byte original_result = _kyGetCursorPoint_handle.orig_fptr.Invoke(param_1, param_2);
-
         // should prevent crashes with GG slot in memory set to 32 (Freelancer)
-        if (chr_id == 0x01000000) { return _kyGetCursorPoint_handle.orig_fptr.Invoke(0, plate_id); }
-
-        //_logger.Info("kyGetCursorPoint param_1: " + chr_id.ToString());
-        //_logger.Info("kyGetCursorPoint param_2: " + plate_id.ToString());
+        if (chr_id == 0x01000000) { 
+            return _kyGetCursorPoint_handle.orig_fptr.Invoke(0, plate_id); 
+        }
 
         byte slot = _kyGetCursorPoint_handle.orig_fptr.Invoke(chr_id, plate_id);
-
-        //_logger.Info("kyGetCursorPoint return result: " + slot.ToString());
         return slot;
     }
 
-    // safety hook, this function in the original calls _aullshr() which takes in Garment Grid data manipulates it and the game can use this for memory reads. With new dressphere IDs, it could cause issues.
-    //returns the number of Garment Grids owned. Populates the GG Inventory list, keeps a record of plates with spheres on them etc.
+    /// <summary>
+    /// safety hook, this function in the original calls _aullshr() which takes in Garment Grid data manipulates it and the game can use this for memory reads. With new dressphere IDs, this causes issues.
+    /// 
+    /// Populates the GG Inventory list, keeps a record of plates with spheres on them etc.
+    /// </summary>
+    /// <returns> Number of Garment Grids owned. </returns>
     public unsafe int h_kyGetResultPlateNum()
     {
-        byte cVar1;
-        int plateOwned;
-        int iVar3;
-        int iVar4;
-        int plate_id;
-        int local_c;
-        int local_8;
-        int num_plates_with_spheres;
+        const int GARMENT_GRID_COUNT = 64;
+        const int GRID_DATA_SIZE = 32;             // bytes of data per grid
+        int plate_data_base = FhUtil.get_at<int>(0x9f5fc0); // base of Garment Grid Data
+        byte* gg_obtain_list = FhUtil.ptr_at<byte>(0x9f5fd8); // DAT_00DF5fd8 is a list of which Garment Grids have been obtained. (Menu oriented, which ones to display in the list.
 
+        int plate_id = 0;
+        int num_plates_with_spheres = 0;
+        int num_plates_owned = 0;
+        do {
 
-        iVar3 = 0;
-        iVar4 = 0;
-        plate_id = 0;
-        num_plates_with_spheres = 0;
-        local_c = 0;
-        local_8 = 0;
-        do
-        {
-            plateOwned = (int)h_MsGetSavePlate((uint)plate_id);
-            if (0 < plateOwned)
-            {
+            int plateOwned = (int)h_MsGetSavePlate((uint)plate_id);
+            if (0 < plateOwned) {
 
-                // lop that reads each byte of GGrid data (which is 32 bytes long), used to increment a var that tracks if a grid has spheres set
-                for (int i = 0; i < 32; i++)
-                {
-                    int plate_data_base = FhUtil.get_at<int>(0x9f5fc0);
-                    if (*(byte*)(plate_data_base + (plate_id * 32) + i) != 0)
-                    {
+                for (int i = 0; i < GRID_DATA_SIZE; i++) {
+                    // If Garment Grid has a dressphere set, increment counter and break from loop
+                    if (*(byte*)(plate_data_base + (plate_id * 32) + i) != 0) {
                         num_plates_with_spheres++;
                         break;
                     }
                 }
 
-
-                /* DAT_00DF5fd8 is a list of which Garment Grids have been obtained.(Menu oriented, which ones to display in the list. */
-                //(&DAT_00df5fd8)[local_c] = (char)local_10;
-                byte* gg_obtain_list = FhUtil.ptr_at<byte>(0x9f5fd8);
-                *(byte*)(gg_obtain_list + local_c) = (byte)plate_id;
-
-                iVar3 = local_c + 1;
-                iVar4 = local_8;
-                local_c = iVar3;
+                *(byte*)(gg_obtain_list + num_plates_owned) = (byte)plate_id;
+                num_plates_owned++;
             }
+
             plate_id = plate_id + 1;
-        } while (plate_id < 0x40);//0x40 is number of Grids
+        } while (plate_id < GARMENT_GRID_COUNT);
 
-        //DAT_00df6d88 = iVar4; // number of Grids that have Dresspheres on them.
-        FhUtil.set_at<int>(0x9f6d88, num_plates_with_spheres); // number of Grids that have Dresspheres on them.
-
-        return iVar3; // return number of owned Garment Grids
+        FhUtil.set_at<int>(0x9f6d88, num_plates_with_spheres);
+        return num_plates_owned;
     }
 
 }

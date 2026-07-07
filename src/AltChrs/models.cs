@@ -1,7 +1,7 @@
 ﻿namespace Fahrenheit.Mods.X2DSUnlimit;
 
 /// <summary>
-/// This file contains the function that swaps dressphere model.
+/// This file contains the function that swaps dressphere models when loading into battle.
 /// Freelancer and Leblanc Goon use YRP's default model by default, what they're changed to can be set here.
 /// </summary>
 
@@ -10,13 +10,15 @@ public partial class X2DSUnlimitModule : FhModule {
     //624f90 - used to overwrite the character model to be loaded in battle
     public unsafe uint h_MsGetChrID(uint chr_id) {
         //invoke as normal
-        uint orig_return_result = _MsGetChrID_handle.orig_fptr.Invoke(chr_id);
+        uint original_result = _MsGetChrID_handle.orig_fptr.Invoke(chr_id);
 
-        //get character battle info address, change model under certain conditions and return
+        //get character battle info address, record original model
         int chr_base_addr = h_MsGetChr(chr_id);
         int original_model = *(int*)(chr_base_addr + 4);
         ushort* party_ds_record_base = FhUtil.ptr_at<ushort>(0xa016f6);
 
+
+        // Chr + is character model, Chr + 8 is character motion
         switch (original_model) {
             //Yuna Gunner model
             case 1:
@@ -66,7 +68,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
                 return chr_id;
             default:
-                return orig_return_result;
+                return original_result;
         }
     }
 

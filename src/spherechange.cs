@@ -3,12 +3,14 @@
 public partial class X2DSUnlimitModule : FhModule
 {
 
-    // This function is hooked to try and prevent crashes when switching to Freelancer in battle. (not just a lack of animation thing)
-    // Leblanc Goon seems fine.
-    // This function is called when the Triangle menu is opened, or spherechange is executed.
-    // Param 1 is 0x25 on spherechange (790c90), 0x12 on Tri/Y/V Menu open (71003fc90_761300)
-    // P2 is a TOFaceIndexResult (790c90) - 
-    // P3 is a large number, dont think it's a memory address (chr or party data?) (Seems to point after voicemapper if it is?)
+    /// <summary>
+    /// This function is hooked to try and prevent crashes when switching to Freelancer in battle. (not just a lack of animation issue)
+    /// Leblanc Goon is fine.
+    /// See param_1 info for details on this functions 2 callers.
+    /// </summary>
+    /// <param name="param_1"></param> -  is 0x25 on spherechange (790c90), 0x12 on Tri/Y/V Menu open (71003fc90_761300)
+    /// <param name="param_2"></param> - is a TOFaceIndexResult (790c90) - 
+    /// <param name="param_3"></param> - P3 is a large number, possibly memory address
     public void h_F791610(int param_1, int param_2, int param_3)
     {
 

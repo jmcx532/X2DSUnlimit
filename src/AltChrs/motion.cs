@@ -3,7 +3,9 @@
 /// <summary>
 /// Each dressphere has motion data present in system_01.bin, however, there is none present for Freelancer and Leblanc Goon.
 /// This data originally can be found in system_01.bin at 0x3EB6C. It consist of block of 56 bytes representing ChrRamMotionData
-/// Here you can set motion data for Freelancer and Leblanc Goon as required.
+/// 
+/// Here you can set motion data for Freelancer and Leblanc Goon as required, see bottom of file.
+/// See jppc/battle/btl/system_01/mot_system_01.txt for vanilla examples.
 /// </summary>
 
 // this is as the data is laid out in system_01.bin - not in game memory!
@@ -40,26 +42,26 @@ public struct MotionChrData {
 
 public partial class X2DSUnlimitModule : FhModule {
 
-    // write correct RamMotionChrData for FL/LG - not in system_01.bin for these 2 dresspheres
-    // this function needs to be updated -- just has Warriors values, need to customise
+    // write correct RamMotionChrData for Freelancer/LG - not in system_01.bin for these 2 dresspheres
     public unsafe void h_MsSetRamMotionChrData(int chr_id, uint job_id) {
+        //int job_number = h_MsGetJobNumBasic(job_id);
 
         // handle Freelancer and Leblanc Goon
         if (job_id >= 0x5020) {
             _logger.Info("Running for FL/LG");
 
-            MotionChrData motion_data = default_mot;
+            MotionChrData motion_data = default_motion;
 
             if (job_id == 0x5020) {
                 switch (chr_id) {
                     case 0:
-                        motion_data = y_freelancer_mot;
+                        motion_data = y_freelancer_motion;
                         break;
                     case 1:
-                        motion_data = r_freelancer_mot;
+                        motion_data = r_freelancer_motion;
                         break;
                     case 2:
-                        motion_data = p_freelancer_mot;
+                        motion_data = p_freelancer_motion;
                         break;
                 }
 
@@ -67,25 +69,18 @@ public partial class X2DSUnlimitModule : FhModule {
             if (job_id == 0x5021) {
                 switch (chr_id) {
                     case 0:
-                        motion_data = y_leblancgoon_mot;
+                        motion_data = y_leblancgoon_motion;
                         break;
                     case 1:
-                        motion_data = r_leblancgoon_mot;
+                        motion_data = r_leblancgoon_motion;
                         break;
                     case 2:
-                        motion_data = p_leblancgoon_mot;
+                        motion_data = p_leblancgoon_motion;
                         break;
                 }
             }
 
-
-            int chr_base;
-            int job_number;
-
-            chr_base = h_MsGetChr((uint)chr_id);
-            job_number = h_MsGetJobNumBasic(job_id);
-
-
+            int chr_base = h_MsGetChr((uint)chr_id);
 
             *(byte*)(chr_base + 0x75f) = (byte)motion_data.mot_bin_num; //0; //(byte)psVar3[1];
             *(short*)(chr_base + 0x796) = motion_data.round_frame; //(short)freelancer_motion_data[2];//psVar3[2];
@@ -109,11 +104,10 @@ public partial class X2DSUnlimitModule : FhModule {
         else {
             _MsSetRamMotionChrData_handle.orig_fptr.Invoke(chr_id, job_id);
         }
-
-
     }
 
-    MotionChrData y_freelancer_mot = new(){
+
+    MotionChrData y_freelancer_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 
@@ -141,7 +135,8 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
-    MotionChrData y_leblancgoon_mot = new(){
+
+    MotionChrData y_leblancgoon_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 
@@ -169,7 +164,8 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
-    MotionChrData r_freelancer_mot = new(){
+
+    MotionChrData r_freelancer_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 
@@ -197,7 +193,8 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
-    MotionChrData r_leblancgoon_mot = new(){
+
+    MotionChrData r_leblancgoon_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 
@@ -225,7 +222,8 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
-    MotionChrData p_freelancer_mot = new(){
+
+    MotionChrData p_freelancer_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 
@@ -253,7 +251,8 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
-    MotionChrData p_leblancgoon_mot = new(){
+
+    MotionChrData p_leblancgoon_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 
@@ -281,7 +280,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
-    MotionChrData default_mot = new(){
+    MotionChrData default_motion = new(){
         chr_id = 0,
         job_num = 0x20,
 

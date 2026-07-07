@@ -14,7 +14,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
 
     /// <summary>
-    /// Overwrites Job entries in memory after job.bin has been loaded.
+    /// Usage: Overwrites Job entries in memory after job.bin has been loaded.
     /// </summary>
     bool FUN_6083B0_runOnce = false;
     //param_1 is a custom excel bin number, 8 is Job.bin
@@ -25,13 +25,11 @@ public partial class X2DSUnlimitModule : FhModule {
             FUN_6083B0_runOnce = true;
             InitYunaFreelancer();
             InitYunaLeblancGoon();
-            
         }
-
         return original_result;
     }
 
-    // Initialise Rikku and Paine's own Freelancer and Leblanc Goon job data
+    // Initialise Rikku and Paine's own Freelancer and Leblanc Goon NativeAlloc job data
     public void InitNewJobs() {
         InitRikkuFreelancer();
         InitRikkuLeblancGoon();
@@ -39,11 +37,10 @@ public partial class X2DSUnlimitModule : FhModule {
         InitPaineLeblancGoon();
     }
 
-
     /// <summary>
     /// Job data definitions
     /// 
-    /// Note 1: Only Yuna's Freelance/Leblanc Goon data needs to be written back to job.bin in memory
+    /// Note 1: Only Yuna's Freelance/Leblanc Goon data needs to be written back to job.bin in memory, Rikku/Paine's data is in NativeAlloc
     /// </summary>
     public unsafe void InitYunaFreelancer() {
         // read and get copy of Job struct
@@ -125,8 +122,8 @@ public partial class X2DSUnlimitModule : FhModule {
         y_freelancer.yuna_weapon_data[3].weapon_position = 0;
 
 
+
         // abilities
-        /*
         y_freelancer.dressphere_abilities[0].requirement = 0;
         y_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
         y_freelancer.dressphere_abilities[1].requirement = 0;
@@ -142,7 +139,7 @@ public partial class X2DSUnlimitModule : FhModule {
         y_freelancer.dressphere_abilities[6].requirement = 0;
         y_freelancer.dressphere_abilities[6].ability = 0;
         y_freelancer.dressphere_abilities[7].requirement = 0;
-        y_freelancer.dressphere_abilities[7].ability = 0; ;
+        y_freelancer.dressphere_abilities[7].ability = 0;
         y_freelancer.dressphere_abilities[8].requirement = 0;
         y_freelancer.dressphere_abilities[8].ability = 0;
         y_freelancer.dressphere_abilities[9].requirement = 0;
@@ -159,46 +156,6 @@ public partial class X2DSUnlimitModule : FhModule {
         y_freelancer.dressphere_abilities[14].ability = 0;
         y_freelancer.dressphere_abilities[15].requirement = 0;
         y_freelancer.dressphere_abilities[15].ability = 0;
-        */
-
-        // abilities
-        y_freelancer.dressphere_abilities[0].requirement = 0;
-        y_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
-
-        y_freelancer.dressphere_abilities[1].requirement = 1;
-        y_freelancer.dressphere_abilities[1].ability = 0x31FA; //
-
-        y_freelancer.dressphere_abilities[2].requirement = 1;
-        y_freelancer.dressphere_abilities[2].ability = 0x31F4; //
-
-        y_freelancer.dressphere_abilities[3].requirement = 0x31F4;
-        y_freelancer.dressphere_abilities[3].ability = 0x31F7; //
-
-        y_freelancer.dressphere_abilities[4].requirement = 0x31F7;
-        y_freelancer.dressphere_abilities[4].ability = 0x31FD; //
-
-        y_freelancer.dressphere_abilities[5].requirement = 0;
-        y_freelancer.dressphere_abilities[5].ability = 0x3200;
-        y_freelancer.dressphere_abilities[6].requirement = 1;
-        y_freelancer.dressphere_abilities[6].ability = 0x3201;
-        y_freelancer.dressphere_abilities[7].requirement = 1;
-        y_freelancer.dressphere_abilities[7].ability = 0x3202;
-        y_freelancer.dressphere_abilities[8].requirement = 1;
-        y_freelancer.dressphere_abilities[8].ability = 0x420D;
-        y_freelancer.dressphere_abilities[9].requirement = 0x103;
-        y_freelancer.dressphere_abilities[9].ability = 0x3204;
-        y_freelancer.dressphere_abilities[10].requirement = 0x3204;
-        y_freelancer.dressphere_abilities[10].ability = 0x3205;
-        y_freelancer.dressphere_abilities[11].requirement = 0x8050;
-        y_freelancer.dressphere_abilities[11].ability = 0x8013;
-        y_freelancer.dressphere_abilities[12].requirement = 1;
-        y_freelancer.dressphere_abilities[12].ability = 0x8050;
-        y_freelancer.dressphere_abilities[13].requirement = 1;
-        y_freelancer.dressphere_abilities[13].ability = 0x805C;
-        y_freelancer.dressphere_abilities[14].requirement = 0x805C;
-        y_freelancer.dressphere_abilities[14].ability = 0x8077;
-        y_freelancer.dressphere_abilities[15].requirement = 0x8077;
-        y_freelancer.dressphere_abilities[15].ability = 0x809B;
 
         // Write the changes to memory
         *(Job*)h_MsGetRomJob(0, 0x5020, null) = y_freelancer;
@@ -403,7 +360,6 @@ public partial class X2DSUnlimitModule : FhModule {
         rikku_freelancer.rikku_weapon_data[3].weapon_position = 0;
 
         // abilities
-        /*
         rikku_freelancer.dressphere_abilities[0].requirement = 0;
         rikku_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
         rikku_freelancer.dressphere_abilities[1].requirement = 0;
@@ -420,45 +376,6 @@ public partial class X2DSUnlimitModule : FhModule {
         rikku_freelancer.dressphere_abilities[6].ability = 0;
         rikku_freelancer.dressphere_abilities[7].requirement = 0;
         rikku_freelancer.dressphere_abilities[7].ability = 0;
-        rikku_freelancer.dressphere_abilities[8].requirement = 0;
-        rikku_freelancer.dressphere_abilities[8].ability = 0;
-        rikku_freelancer.dressphere_abilities[9].requirement = 0;
-        rikku_freelancer.dressphere_abilities[9].ability = 0;
-        rikku_freelancer.dressphere_abilities[10].requirement = 0;
-        rikku_freelancer.dressphere_abilities[10].ability = 0;
-        rikku_freelancer.dressphere_abilities[11].requirement = 0;
-        rikku_freelancer.dressphere_abilities[11].ability = 0;
-        rikku_freelancer.dressphere_abilities[12].requirement = 0;
-        rikku_freelancer.dressphere_abilities[12].ability = 0;
-        rikku_freelancer.dressphere_abilities[13].requirement = 0;
-        rikku_freelancer.dressphere_abilities[13].ability = 0;
-        rikku_freelancer.dressphere_abilities[14].requirement = 0;
-        rikku_freelancer.dressphere_abilities[14].ability = 0;
-        rikku_freelancer.dressphere_abilities[15].requirement = 0;
-        rikku_freelancer.dressphere_abilities[15].ability = 0;
-        */
-
-        // abilities
-        rikku_freelancer.dressphere_abilities[0].requirement = 0;
-        rikku_freelancer.dressphere_abilities[0].ability = 0x302D; // Attack
-
-        rikku_freelancer.dressphere_abilities[1].requirement = 0;
-        rikku_freelancer.dressphere_abilities[1].ability = 0x30C8; // Flee
-
-        rikku_freelancer.dressphere_abilities[2].requirement = 0;
-        rikku_freelancer.dressphere_abilities[2].ability = 0x3176; // Hastw
-
-        rikku_freelancer.dressphere_abilities[3].requirement = 0x3176;
-        rikku_freelancer.dressphere_abilities[3].ability = 0x3177; // Hastega
-
-        rikku_freelancer.dressphere_abilities[4].requirement = 1;
-        rikku_freelancer.dressphere_abilities[4].ability = 0x306F; // Delay Attack
-        rikku_freelancer.dressphere_abilities[5].requirement = 0x306f;
-        rikku_freelancer.dressphere_abilities[5].ability = 0x3070; // Delay Buster
-        rikku_freelancer.dressphere_abilities[6].requirement = 1;
-        rikku_freelancer.dressphere_abilities[6].ability = 0x3165; // Steel Feather
-        rikku_freelancer.dressphere_abilities[7].requirement = 0x3165;
-        rikku_freelancer.dressphere_abilities[7].ability = 0x3166; // Diamond Feather
         rikku_freelancer.dressphere_abilities[8].requirement = 0;
         rikku_freelancer.dressphere_abilities[8].ability = 0;
         rikku_freelancer.dressphere_abilities[9].requirement = 0;

@@ -1,15 +1,10 @@
-﻿
-
-namespace Fahrenheit.Mods.X2DSUnlimit;
+﻿namespace Fahrenheit.Mods.X2DSUnlimit;
 
 public partial class X2DSUnlimitModule : FhModule
 {
     /* FFX-2.exe + A02240 = Start of character's command AP earned records (MsGetSaveAP) 0x350 per character
-     * FFX-2.exe + A026e0 = Start of character's auto-ability AP earned records (MsGetSaveAP) 0x350 per character
-     * 
-     * 
+     * FFX-2.exe + A026E0 = Start of character's auto-ability AP earned records (MsGetSaveAP) 0x350 per character
      */
-
 
     public unsafe string ReadAbilityName(uint ability_id)
     {
@@ -36,9 +31,6 @@ public partial class X2DSUnlimitModule : FhModule
             ability_base_addr = h_MsGetRomAbility(ability_id, p);
         }
 
-        
-        
-
         ushort ability_name_string_pointer_val = *(ushort*)(ability_base_addr);
 
         byte* ability_name_bytes = null;
@@ -51,7 +43,6 @@ public partial class X2DSUnlimitModule : FhModule
         {
             return "Attack";
         }
-
 
         Span<byte> buf = stackalloc byte[40];
 
@@ -83,9 +74,10 @@ public partial class X2DSUnlimitModule : FhModule
         };
     }
 
+    /*
     public unsafe override void render_imgui()
     {
-        /*
+        
 
         //base.render_imgui();
         uint show_job_ability_list = FhUtil.get_at<uint>(0x12c0260); // flag which is 1 when viewing a dressphere's abilities in the Abilities Menu
@@ -237,7 +229,8 @@ public partial class X2DSUnlimitModule : FhModule
                 //ImGui.PopStyleColor(1);
             }
         }
-        */
+        
     }
 
+    */
 }

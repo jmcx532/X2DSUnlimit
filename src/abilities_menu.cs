@@ -1,9 +1,6 @@
-﻿using System.Text;
+﻿namespace Fahrenheit.Mods.X2DSUnlimit;
 
-namespace Fahrenheit.Mods.X2DSUnlimit;
-
-//used for rendering - fetch data to fill, and update underlying data, not these directly?
-// Populated by TOMenuMakeJobAbilityList
+//used for Ability menu rendering - Populated by TOMenuMakeJobAbilityList
 [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x10)]
 public struct DSAbilityListDataAbility {
     [FieldOffset(0x00)] public bool is_visible;
@@ -17,14 +14,14 @@ public struct DSAbilityListDataAbility {
 
 [InlineArray(16)]
 public struct DSAbilityListDataAbilityArray {
-    private DSAbilityListDataAbility _element0;
+    public DSAbilityListDataAbility _element0;
 }
 
 // Populated by TOMenuMakeJobAbilityList, 0x110 per dressphere
-// FFX-2.exe + DBB200 + (DS_ID * 0x110)
+// Originally at: FFX-2.exe + DBB200 + (DS_ID * 0x110), replaced with NativeAlloc, main.cs: private unsafe DSAbilityListData* ability_list_data_ptr;
 [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x110)]
 public struct DSAbilityListData {
-    [FieldOffset(0x00)] public int i0;
+    [FieldOffset(0x00)] public int is_valid;
     [FieldOffset(0x04)] public int ds_id;
     [FieldOffset(0x08)] public int percentage;
     [FieldOffset(0x0C)] public int i1;
@@ -60,29 +57,29 @@ public partial class X2DSUnlimitModule : FhModule {
         return _memset_handle.orig_fptr.Invoke(_Dst, _Val, _Size);
     }
 
-
-    // Used for Abilities Menu, necessary for Freelancer and Leblanc Goon to show up in job list
+    /// <summary>
+    /// Used for Abilities Menu, necessary for Freelancer and Leblanc Goon to show up in job list
+    /// </summary>
+    /// <returns> Number of dresspheres to list </returns>
     public unsafe uint h_kyGetJobNum3() {
         byte bVar1;
-        int iVar2;
-        int iVar3;
-        uint number_of_elements;
-        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);// list of dressphere IDs (byte), unique ones on current grid, 
+        int is_owned;
+        int special_ds_owned;
+        uint ds_count;
 
+        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);// list of dressphere IDs (byte), unique ones on current grid, 
         byte* ds_amount = FhUtil.ptr_at<byte>(0x9f6018); //this is speculative
 
-        iVar3 = 0;
-        number_of_elements = 0;
+        ds_count = 0;
         for (int i = 0; i < CustomDsLookupTable.Length; i++) {
-            iVar2 = h_MsGetSaveDreSphere(CustomDsLookupTable[i]);
-            if (0 < iVar2) {
-                unique_ds_on_grid_list[number_of_elements] = (byte)CustomDsLookupTable[i];
-                number_of_elements++;
+
+            is_owned = h_MsGetSaveDreSphere(CustomDsLookupTable[i]);
+            if (0 < is_owned) {
+                unique_ds_on_grid_list[ds_count] = (byte)CustomDsLookupTable[i];
+                ds_count++;
             }
 
-            //(&DAT_00df6018)[iVar3] = (byte)iVar2;
-            ds_amount[iVar3] = (byte)iVar2;
-            iVar3 = iVar3 + 1;
+            ds_amount[i] = (byte)is_owned;
         }
 
         //ints with special dressphere ids, + chr_id menu character, 8 4
@@ -91,30 +88,36 @@ public partial class X2DSUnlimitModule : FhModule {
         byte menu_chr_id = FhUtil.get_at<byte>(0x9f6d80); // in certain Tri/Y/V Menus, is the chr_id of the character who's being looked at.
         int tgt_special_ds_id = special_ds_id_records[menu_chr_id];
 
-        iVar3 = h_MsGetSaveDreSphere((uint)tgt_special_ds_id);
-        if (0 < iVar3) {
+        special_ds_owned = h_MsGetSaveDreSphere((uint)tgt_special_ds_id);
+        if (0 < special_ds_owned) {
             FhUtil.set_at<ushort>(0x9f6028, 0x101);
 
             bVar1 = (byte)special_ds_id_records[menu_chr_id];
-            unique_ds_on_grid_list[number_of_elements] = bVar1;
+            unique_ds_on_grid_list[ds_count] = bVar1;
             FhUtil.set_at<byte>(0x9f602a, 1);
-            unique_ds_on_grid_list[number_of_elements + 1] = (byte)(bVar1 + 1);
-            unique_ds_on_grid_list[number_of_elements + 2] = (byte)(bVar1 + 2);
-            number_of_elements = number_of_elements + 3;
+            unique_ds_on_grid_list[ds_count + 1] = (byte)(bVar1 + 1);
+            unique_ds_on_grid_list[ds_count + 2] = (byte)(bVar1 + 2);
+            ds_count = ds_count + 3;
         }
 
 
-        FhUtil.set_at<byte>(0x9f602c, (byte)number_of_elements);
+        FhUtil.set_at<byte>(0x9f602c, (byte)ds_count);
         //_logger.Info("Return result: " + number_of_elements.ToString());
-        return number_of_elements;
+        return ds_count;
 
     }
 
-
+    /// <summary>
+    /// Uused for ABilities menu job list rendering.
+    /// </summary>
+    /// <param name="param_1"></param>
+    /// <param name="job_id"></param>
+    /// <returns>Dressphere ability learned percentage</returns>
     public unsafe uint h_TOMenuGetJobLearnedRate(uint param_1, uint job_id) {
         return (uint)ability_list_data_ptr[job_id & 0xff].percentage;
     }
 
+    // Abilities menu, set ability to learn
     public unsafe void h_TOMenuSetSaveLearn(byte chr_id, uint job_id, int slot) {
         DSAbilityListData* abi_list_table = ability_list_data_ptr;
         uint job_num = job_id & 0xff;
@@ -128,16 +131,16 @@ public partial class X2DSUnlimitModule : FhModule {
     //adds Freelancer/Leblanc Goon to abilities menu job list
     public unsafe void h_TOMenuMakeJobList(int chr_id)
     {
-        uint job_idNum_toCheck;
+        uint job_num_to_check;
         uint job_id;
-
 
         //DSAbilityListData* job_table = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
         DSAbilityListData* job_table = ability_list_data_ptr;
 
+        // zero Ability List Data
         for (int i = 0; i < ability_list_count; i++) {
             ref DSAbilityListData job = ref job_table[i];
-            job.i0 = 0;
+            job.is_valid = 0;
             job.ds_id = 0xff;
             job.percentage = 0;
             job.i1 = 0;
@@ -145,19 +148,16 @@ public partial class X2DSUnlimitModule : FhModule {
             Span<DSAbilityListDataAbility> abilities = job.Abilities;
             abilities.Clear();
         }
-
         FhUtil.set_at<byte>(0x12c0265, 0);
         FhUtil.set_at<byte>(0x12c0266, 0);// abilities menu: dressphere id viewing/last viewed
 
-        job_idNum_toCheck = 0;
 
-        // entry < 34 -> 34 is the nww max jobs to look through, added LG and Freelancer
-        for (int entry = 0; entry < 34; entry++)
+        // Invoke Ability list data population
+        job_num_to_check = 0;
+        for (int entry = 0; entry < ability_list_count; entry++)
         {
-            job_id = job_idNum_toCheck | 0x5000;
-
+            job_id = job_num_to_check | 0x5000;
             bool validJob = false;
-
             switch (job_id)
             {
                 case 0x5001:
@@ -176,25 +176,17 @@ public partial class X2DSUnlimitModule : FhModule {
                 case 0x500E:
                 case 0x501C:
                 case 0x501D:
-
-                    if (h_MsGetSaveDreSphere(job_id) != 0)// if dressphere obtained/in inventory
-                    {
-                        validJob = true;
-                        h_TOMenuMakeJobAbilityList((uint)chr_id, job_id);
-                    }
-                    break;
-
                 case 0x5020: // Freelancer
                 case 0x5021: // Leblanc Goon
 
-                    if (h_MsGetSaveDreSphere(job_id) != 0)// if dressphere obtained/in inventory
+                    if (h_MsGetSaveDreSphere(job_id) != 0)// if dressphere has been obtained/in inventory
                     {
                         validJob = true;
                         h_TOMenuMakeJobAbilityList((uint)chr_id, job_id);
                     }
                     break;
 
-                case 0x500F:
+                case 0x500F: // Floral Fallal
                 case 0x5010:
                 case 0x5011:
 
@@ -206,7 +198,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     }
                     break;
 
-                case 0x5012:
+                case 0x5012: // Machina Maw
                 case 0x5013:
                 case 0x5014:
 
@@ -218,7 +210,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     }
                     break;
 
-                case 0x5015:
+                case 0x5015: // Full Throttle
                 case 0x5016:
                 case 0x5017:
 
@@ -231,35 +223,37 @@ public partial class X2DSUnlimitModule : FhModule {
                     break;
             }
 
+            // Write 'Dressphere' related data to Ability menu, Data list
             ref DSAbilityListData job_entry = ref job_table[entry];
             if (validJob) {
-                job_entry.i0 = 1;
+                job_entry.is_valid = 1;
                 job_entry.ds_id = (int)job_id;
 
                 byte count = FhUtil.get_at<byte>(0x12c0265);
                 FhUtil.set_at<byte>(0x12c0265, (byte)(count + 1));
             }
             else {
-                job_entry.i0 = 0;
+                job_entry.is_valid = 0;
                 job_entry.ds_id = 0xff;
                 job_entry.percentage = 0;
                 job_entry.i1 = 0;
             }
 
-            job_idNum_toCheck++;
+            job_num_to_check++;
         }
 
     }
 
-
-
-    // p1 is DAT_00df6d80 -> chr_id of who is viewed in the menu YRP -> 0,1,2, p2 is ds_id from kyGetJobIndex (currently equipped/viewed ds_id?)
-    // Function updated to use custom table
+    /// <summary>
+    /// Entered 16x ability view function
+    /// </summary>
+    /// <param name="menu_chr_id"></param>
+    /// <param name="menu_job_id"></param>
     public unsafe void h_TOMenuStartJobAbilityWindow(uint menu_chr_id, uint menu_job_id) {
         FhUtil.set_at<uint>(0x12c0270, menu_chr_id);
         FhUtil.set_at<uint>(0x12c0274, menu_job_id | 0x5000);
 
-        //DSAbilityListData* jobTable = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
+        //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
         DSAbilityListData* abi_list_data = ability_list_data_ptr;
 
         for (int i = 0; i < ability_list_count; i++) {
@@ -271,31 +265,13 @@ public partial class X2DSUnlimitModule : FhModule {
         FhUtil.set_at<uint>(0x963ed4, 7); // used for menu progression: tells game it's now entered the DS ability list with 16 moves showing, AP, mastery, etc.
     }
 
-    // Writes abilities menu, dressphere 16x ability list data
+    // Writes Abilities menu: 16x dressphere ability list data
     public unsafe void h_TOMenuMakeJobAbilityList(uint chr_id, uint job_id) {
-        uint uVar1;
-        int iVar2;
 
         Job* job_data;
-
-        uint uVar3;
-        int iVar4;
-        int iVar5;
-        byte* pbVar6;
-        uint uVar7;
-        uint* puVar7;
-        byte* pbVar9;
-
-        int local_18;
-        ushort* local_14;
-        uint* local_10;
         int local_c;
-        uint local_8;
-
-
-        uint current_ap;
-        uint needed_ap;
-
+        
+        // Special Dressphere support unit handling
         switch (job_id) {
             case 0x5010: chr_id = 3; break;
             case 0x5011: chr_id = 4; break;
@@ -310,66 +286,32 @@ public partial class X2DSUnlimitModule : FhModule {
         DSAbilityListData* abi_list_table = ability_list_data_ptr;
         uint job_num = job_id & 0xff;
 
-        //local_8 = chr_id;
         byte* local_1c = stackalloc byte[64];
-
-
         job_data = h_MsGetRomJob(chr_id, job_id, local_1c);
-        //uVar1 = local_8;
 
-        //local_14 = (ushort*)(iVar2 + 0x3e); // start of job.bin dressphere abilities
-        //local_14 = job_data->dressphere_abilities;
-
-        
-
-        /*
-        uint* DAT_11bb200 = FhUtil.ptr_at<uint>(0xdbb200);
-        nint DAT_11bb200_addr = (nint)DAT_11bb200;
-        //local_10 = &DAT_011bb200 + (param_2 & 0xfff) * 0x44;
-        local_10 = (uint*)DAT_11bb200_addr + (job_id & 0xfff) * 0x44; // start of ability list data
-        //local_10 = &DAT_011bb200 + (param_2 & 0xfff) * 0x110;
-
-        local_8 = chr_id;
-
-        //byte* local_1c = stackalloc byte[64];
-
-        iVar2 = (int)h_MsGetRomJob(chr_id, job_id, local_1c);
-        uVar1 = local_8;
-        local_14 = (ushort*)(iVar2 + 0x3e); // start of job.bin dressphere abilities
-        
-
-        byte* D_dbb213 = FhUtil.ptr_at<byte>(0xdbb213);
-        //iVar2 = (int)((job_id & 0xfff) * 0x110 + 0x11bb213);
-        iVar2 = (int)((job_id & 0xfff) * 0x110 + (int)D_dbb213); // focus is on is_selected bool
-        */
-
-        // Initial pass - add ability IDS, set AP
+        // Loop 1 - add ability IDs, set AP
         for (int i = 0; i < 16; i++) {
-            ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i]; // memory table
-            uint abilityId = job_data->dressphere_abilities[i].ability; //job.bin style Job
+            ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i]; // NativeAlloc Ability data list
+            uint ability_id = job_data->dressphere_abilities[i].ability; //job.bin style Job
 
-            // Set values
             ability.is_visible = false;
             ability.is_mastered = false;
             ability.is_selected = false;
-            ability.ability_id = abilityId;
+            ability.ability_id = ability_id; // read from Job, put in Ability List data
 
-            uint currentAp = h_MsGetSaveAp(chr_id, abilityId);
-            uint neededAp = h_MsGetSaveNeedAp((byte)chr_id, abilityId);
+            uint current_ap = h_MsGetSaveAp(chr_id, ability_id);
+            uint needed_ap = h_MsGetSaveNeedAp((byte)chr_id, ability_id);
 
-            ability.ap_current = currentAp;
-            ability.ap_needed = neededAp;
+            ability.ap_current = current_ap;
+            ability.ap_needed = needed_ap;
 
-            if (neededAp < currentAp) {
-                ability.ap_current = neededAp;
+            if (needed_ap < current_ap) {
+                ability.ap_current = needed_ap; // cap current AP to Max Required AP
             }
         }
 
-
-
-
+        // Loop 2 - ability visibility and current learn selected flag
         int learnable_list = h_MsGetJobAbilityList((int)chr_id, (int)job_id, &local_c, 0);
-
         for (int i = 0; i < 16; i++) {
             ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i];
 
@@ -377,53 +319,22 @@ public partial class X2DSUnlimitModule : FhModule {
                 ushort candidate = *(ushort*)(learnable_list + j * 2);
                 if (candidate == 0x00FF) continue;
 
+                // If match, Set ability visibility flag
                 if (ability.ability_id == candidate) {
                     ability.is_visible = true;
 
-                    uint currentLearnTarget = h_MsGetSaveLearn(chr_id, job_id);
-                    if (currentLearnTarget == ability.ability_id) {
-                        ability.is_selected = true;   // <-- fix: was incorrectly set to is_visible again
+                    // Mark ability currently being learned for highlight
+                    uint current_learn_target = h_MsGetSaveLearn(chr_id, job_id);
+                    if (current_learn_target == ability.ability_id) {
+                        ability.is_selected = true;   
                     }
                     break;
                 }
             }
         }
 
-
-        /*
-        iVar4 = 0x10; // iteratorr
-        puVar8 = local_10 + 5; // ability id
-        
-        iVar2 = local_c;
-        do
-        {
-            iVar5 = 0;
-            if (0 < iVar2)
-            {
-                do
-                {
-                    if (*puVar8 == (uint)*(ushort*)(local_18 + iVar5 * 2))
-                    {
-                        *(byte*)(puVar8 - 1) = 1; // updates is_selected bool
-                        uVar7 = h_MsGetSaveLearn(chr_id, job_id);
-                        iVar2 = local_c;
-                        if (uVar7 == *puVar8)
-                        {
-                            *(byte*)((int)puVar8 - 1) = 1; // updates is_selected bool
-                        }
-                        break;
-                    }
-                    iVar5 = iVar5 + 1;
-                } while (iVar5 < iVar2);
-            }
-            puVar8 = puVar8 + 4;
-            iVar4 = iVar4 + -1;
-        } while (iVar4 != 0);
-        */
-
-
+        // Loop 3 - Ability Mastered flag
         int mastered_list = h_MsGetJobAbilityList((int)chr_id, (int)job_id, &local_c, 1);
-
         for (int i = 0; i < 16; i++) {
             ref DSAbilityListDataAbility ability = ref abi_list_table[job_num].Abilities[i];
 
@@ -442,40 +353,39 @@ public partial class X2DSUnlimitModule : FhModule {
             }
         }
 
-        // --- Final: sum AP, compute completion percentage ---
-        int totalNeeded = 0;
-        int totalMasteredCurrent = 0;
+        // Final: sum AP, compute completion percentage
+        int total_needed_ap = 0;
+        int total_mastered_ap = 0;
 
         for (int k = 0; k < 16; k++) {
             ref DSAbilityListDataAbility _ability = ref abi_list_table[job_num].Abilities[k];
-            totalNeeded += (int)_ability.ap_needed;
+            total_needed_ap += (int)_ability.ap_needed;
             if (_ability.is_mastered) {
-                totalMasteredCurrent += (int)_ability.ap_current;
+                total_mastered_ap += (int)_ability.ap_current;
             }
         }
 
-        if (totalMasteredCurrent == 0 || totalNeeded == 0) {
+        // 0% shortcut
+        if (total_mastered_ap == 0 || total_needed_ap == 0) {
             abi_list_table[job_num].percentage = 0;
         }
-        else if (abi_list_table[job_num].ds_id == 0x5002) {
-            abi_list_table[job_num].percentage = (totalMasteredCurrent * 0x54) / totalNeeded;
+        else if (job_id == 0x5002) {
+            // Gun Mage specific handling
+            abi_list_table[job_num].percentage = (total_mastered_ap * 84) / total_needed_ap;
 
-            byte* scanPtr = FhUtil.ptr_at<byte>(0xdbd420);
-            byte* scanEnd = FhUtil.ptr_at<byte>(0xdbd520);
+            DSAbilityListDataAbilityArray* blue_bullet_ptr = FhUtil.ptr_at<DSAbilityListDataAbilityArray>(0xdbd400);
+            DSAbilityListDataAbilityArray blue_bullet_abi = *blue_bullet_ptr;
 
-            while (scanPtr < scanEnd) {
-                if (scanPtr[-0x20] == 1) abi_list_table[job_num].percentage++;
-                if (scanPtr[-0x10] == 1) abi_list_table[job_num].percentage++;
-                if (scanPtr[0x00] == 1) abi_list_table[job_num].percentage++;
-                if (scanPtr[0x10] == 1) abi_list_table[job_num].percentage++;
-                scanPtr += 0x40;
+            // Each learned Blue Bullet adds 1%
+            for (int i = 0; i < 0x10; i++) {
+                if (blue_bullet_abi[i].is_visible ) { abi_list_table[job_num].percentage++; }
             }
         }
         else {
-            abi_list_table[job_num].percentage = (totalMasteredCurrent * 100) / totalNeeded;
+            // All other Dressphere percentage handling
+            abi_list_table[job_num].percentage = (total_mastered_ap * 100) / total_needed_ap;
         }
 
-        //_TOMenuMakeJobAbilityList_handle.orig_fptr.Invoke(param_1, param_2);
     }
         
 
@@ -483,128 +393,124 @@ public partial class X2DSUnlimitModule : FhModule {
     // Also 16 x ability list
     public unsafe int h_MsGetJobAbilityList(int chr_id, int job_id, int* param_3, int param_4)
     {
-
-       
-
-        // working reimplementation - 
         ushort ability;
         ushort requirement;
+
         uint chr_num;
         uint chr_level;
-        int iVar5;
+
+        int job_addr;
+        int abilities_addr;
+
         bool is_monster;
         int num_abilities_to_check;
+        // conditions
         int iVar8;
         int iVar9;
         int iVar10;
         int iVar11;
-        uint uVar12;
-        int iVar13;
-        int iVar14;
-        uint* puVar15;
+        
 
-        ushort* DAT_00df9258 = FhUtil.ptr_at<ushort>(0x9f9258); // contains auto-abilities and commands to add from accessories
+
+
+        ushort* DAT_00df9258 = FhUtil.ptr_at<ushort>(0x9f9258); // contains auto-abilities and commands to add from accessories?
         nint DAT_00df9258_addr = (nint)(DAT_00df9258);
+        int abilities_checked = 0;
 
-        iVar13 = 0;
         chr_num = h_MsGetChrNum((uint)chr_id);
         chr_level = (uint)h_MsCalcChrLevel((byte)chr_num);
 
-        //iVar5 = _MsGetRomJob(uVar3, (uint)param_2, 0);
-        iVar5 = (int)h_MsGetRomJob(chr_num, (uint)job_id, null);
-        if (iVar5 != 0)
+        job_addr = (int)h_MsGetRomJob(chr_num, (uint)job_id, null);
+        if (job_addr != 0) // if Job address is returned
         {
+
+            // Select:  Number of abilities to check differs between YRP and Creatures
             is_monster = h_MsBtlMonsterSaveNumCheck(chr_num); // Check if Player character or Creature
             if (!is_monster)
             {
                 num_abilities_to_check = 0x10;
-                iVar5 = iVar5 + 0x3c;//job.bin ds abilities table
+                abilities_addr = job_addr + 0x3c;// job.bin ds abilities table
             }
             else
             {
+                // check the 2 abilities in Creature Data of job.bin Job
                 num_abilities_to_check = 2;
-                iVar5 = iVar5 + 0xb0; // creature data
+                abilities_addr = job_addr + 0xb0; // Job, creature data, 2 abiilities
             }
             
 
-            if (iVar5 != 0)
+            if (abilities_addr != 0) //
             {
-                for (iVar14 = 0; iVar14 < num_abilities_to_check; iVar14++)
+                for (int j = 0; j < num_abilities_to_check; j++)
                 {
-                    // iVar5 is the address of Job.dressphere_abilities here
-                    ability = *(ushort*)(iVar5 + 2 + iVar14 * 4);
-                    requirement = *(ushort*)(iVar5 + iVar14 * 4);
-
+                    requirement = *(ushort*)(abilities_addr + j * 4);
+                    ability = *(ushort*)(abilities_addr + 2 + j * 4);
         
                     if (ability != 0)
                     {
+                        // Checks
                         iVar8 = (int)h_MsCheckAbility(chr_num, requirement, (int)chr_level); // does the character have the prereq
-                        iVar9 = (int)h_FUN_6294f0((uint)ability, (int)DAT_00df9258_addr, iVar13);// Excel/MsGetRomAbility related 
+                        iVar9 = (int)h_FUN_6294f0((uint)ability, (int)DAT_00df9258_addr, abilities_checked);// Excel/MsGetRomAbility related 
                         iVar10 = h_MsCheckLearnCommand((byte)chr_num, ability);
                         iVar11 = (int)h_MsGetSaveCommand(chr_num, (uint)ability);
 
                         bool left_condition = is_monster || param_4 == 0 || requirement == 0 || iVar11 != 0;
-                        bool right_condition = (iVar8 != 0 && iVar9 != 0) && (iVar10 != 0 && (iVar13 < 0x10));
+                        bool right_condition = (iVar8 != 0 && iVar9 != 0) && (iVar10 != 0 && (abilities_checked < 0x10));
                         
+                        // If conditions are met
                         if (left_condition && right_condition)
                         {
                             //*(short*)((int)&DAT_00df9258 + iVar13 * 2) = sVar1;
-                            DAT_00df9258[iVar13] = ability;
-                            iVar13 = iVar13 + 1;
+                            DAT_00df9258[abilities_checked] = ability; // Add ability to DF9258 list
+                            abilities_checked++;
                         }
                     }
-
                 }
 
-                
-                if (iVar13 > 0xF) // if reached maximum abilities return
+                // if reached maximum abilities return
+                if (abilities_checked > 0xF) 
                 {
                     goto LAB_00629c2d;
                 }
             }
         }
 
-        for (int i = iVar13; i < 16; i++) // reset memory
+        // null, mark invalid the last abilities?
+        for (int i = abilities_checked; i < 16; i++) 
         {
             DAT_00df9258[i] = 0x00FF;
         }
 
     LAB_00629c2d:
-
         if (param_3 != null)
         {
             *param_3 = 0x10;
         }
-
-        return (int)DAT_00df9258_addr; // Returns mem location of added command/abilities From Accessories
+        return (int)DAT_00df9258_addr; // Returns mem location of added command/abilities From Accessories?
         
     }
 
-
+    /// <summary>
+    /// Drives the functionality of the abilities menu. Some switch cases made use of the FFX-2.exe + 0xdbb200
+    /// ability list data region. As this is now moved to NativeAlloc, some of the cases withing
+    /// this function needed updating.
+    /// </summary>
+    /// <param name="param_1"></param>
     public unsafe void h_FUN_777270(uint param_1) {
 
-        uint uVar8 = *(uint*)(param_1 + 0x28);
-        //_logger.Info("Param_1 is: " + param_1.ToString("X"));
+        uint case_id = *(uint*)(param_1 + 0x28); // switch case selection
 
-        if (uVar8 < 0x14) {
+        // if valid case ID
+        if (case_id < 0x14) {
+            uint* switch_data_777864 = FhUtil.ptr_at<uint>(0x377864); // pointer to switch data
 
-            uint* switch_data_777864 = FhUtil.ptr_at<uint>(0x377864);
-
-            if ((switch_data_777864[uVar8] & 0xFFFF) == 0x762F) {
-
-                //_logger.Info("Param_1 is: " + param_1.ToString("X"));
-
-                // Intercept switch case -> user selects command to learn ( not mastered )
-
+            // Intercept switch case -> user selects command to learn ( not mastered )
+            if ((switch_data_777864[case_id] & 0xFFFF) == 0x762F) {
+                
                 byte job_num = FhUtil.get_at<byte>(0x12c0266);
-                //byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
-
                 uint menu_chr_id = FhUtil.get_at<uint>(0x12c0270);
                 uint menu_job_id = FhUtil.get_at<uint>(0x12c0274);
-
-                short offset_a = *(short*)(param_1 + 0x4c);
-                int offset_b = *(int*)(param_1 + 0x5c);
-                int slot = offset_b + offset_a * 2;
+                int slot = *(int*)(param_1 + 0x5c) + *(short*)(param_1 + 0x4c) * 2;
 
                 h_TOMenuSetSaveLearn((byte)menu_chr_id, menu_job_id, slot);
                 h_TOMenuMakeJobAbilityList(menu_chr_id, menu_job_id);
@@ -612,23 +518,21 @@ public partial class X2DSUnlimitModule : FhModule {
 
                 //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
                 DSAbilityListData* abi_list_data = ability_list_data_ptr;
+                uint ability_id = abi_list_data[job_num].Abilities[slot].ability_id;
 
-                uint abilityId = abi_list_data[job_num].Abilities[slot].ability_id;
-                uint uVar9 = (uint)h_TOBtlGetComName(abilityId);
+                uint com_name_string_addr = (uint)h_TOBtlGetComName(ability_id);
 
-                h_TOMenuSetMacroCommandValue(0, 1, uVar9);
-                uVar9 = h_TOGetMenuText(0x107a);
-                *(uint*)(param_1 + 0x24) = uVar9;
-                *(uint*)(param_1 + 0x28) = 9; // Menu progression state?
+                h_TOMenuSetMacroCommandValue(0, 1, com_name_string_addr);
+                com_name_string_addr = h_TOGetMenuText(0x107a);
+                *(uint*)(param_1 + 0x24) = com_name_string_addr;
+                *(uint*)(param_1 + 0x28) = 9; // Menu progression state record
                 return;
             }
-            else if ((switch_data_777864[uVar8] & 0xFFFF) == 0x7587) {
-                // Intercept switch case -> user selects command to learn (already learned)
 
-                //_logger.Info("Param_1 is: " + param_1.ToString("X"));
-
+            // Intercept switch case -> user selects command to learn (already learned)
+            if ((switch_data_777864[case_id] & 0xFFFF) == 0x7587) {
+                
                 int slot = *(int*)(param_1 + 0x5c) + *(short*)(param_1 + 0x4c) * 2;
-
                 byte job_num = FhUtil.get_at<byte>(0x12c0266);
                 //byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
 
@@ -636,6 +540,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 DSAbilityListData* abi_list_data = ability_list_data_ptr;
                 ref DSAbilityListDataAbility ability = ref abi_list_data[job_num].Abilities[slot];
 
+                // Blue Bullet selected, handling
                 if (ability.ability_id == 0x300a) {
                     h_SndSepPlaySimple(0x80000001);
                     *(ushort*)(param_1 + 0x2c) = *(ushort*)(param_1 + 0x4c);
@@ -644,17 +549,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     return;
                 }
 
-                /*
-          if (*(int *)(&DAT_011bb214 + iVar10 * 0x10 + (uint)(byte)(&DAT_00d63e78)[DAT_016c0266 * 2] * 0x110) == 0x300a) {
-          SndSepPlaySimple(0x80000001);
-          *(undefined2 *)(iVar4 + 0x2c) = *(undefined2 *)(iVar4 + 0x4c);
-          *(char *)(iVar4 + 0x48) = *(char *)(iVar4 + 0x48) + '\x01';
-          *(undefined4 *)(iVar4 + 0x28) = 0xd;
-          return;
-        }
-                 */
-
-
+                // Ability not mastered handling
                 if (!ability.is_mastered) {
                     h_SndSepPlaySimple(0x8000000a);
                     *(uint*)(param_1 + 0x80) = 1;
@@ -667,37 +562,47 @@ public partial class X2DSUnlimitModule : FhModule {
                 *(uint*)(param_1 + 0x28) = 8;
                 return;
             }
-            else {
-                _FUN_777270_handle.orig_fptr.Invoke(param_1);
-            }
+            
+            // Unmodded cases use vanilla behaviour
+            _FUN_777270_handle.orig_fptr.Invoke(param_1);
+            
         }
     }
 
+
+    /// <summary>
+    /// Returns if an ability has been marked to be visible in the Abilities menu.
+    /// This function is hooked to replace:
+    /// FFX-2.exe + 0xdbb200 reference with NativeAlloc AbilityListData
+    /// FFX-2.exe + DAT_00d63e78 AbilityListData lookup table as it's not required because of the previous point.
+    /// </summary>
+    /// <param name="param_1"></param>
+    /// <param name="ability_slot"></param>
+    /// <returns> Boolean: is the ability marked as visible </returns>
     public unsafe bool h_FUN_776EC0(uint param_1, int ability_slot) {
         //DSAbilityListData* abi_list_data = FhUtil.ptr_at<DSAbilityListData>(0xdbb200);
         DSAbilityListData* abi_list_data = ability_list_data_ptr;
 
-        byte ds = FhUtil.get_at<byte>(0x12c0266);
-
         //byte job_index = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds & 0xff];
+        byte ds = FhUtil.get_at<byte>(0x12c0266);
 
         DSAbilityListData* job = &abi_list_data[ds];
 
         return job->Abilities[ability_slot].is_visible;
     }
 
+
     /// <summary>
     /// Renders the dressphere ability list in the Abilities menu -> 16 dressphere abilities, icons, names, master icon and AP
     /// </summary>
     public unsafe void h_FUN_778160(int param_1, int param_2, int param_3, int param_4)
     {
-
         //_logger.Info("Param_1 is: " + param_1.ToString("X"));
         //_logger.Info("Param_2 is: " + param_2.ToString("X"));
         //_logger.Info("Param_3 is: " + param_3.ToString("X"));
         //_logger.Info("Param_4 is: " + param_4.ToString("X"));
 
-        int puVar1; // is a memory address
+        int puVar1;
         uint uVar2;
         uint uVar3;
         int iVar4;
@@ -747,7 +652,7 @@ public partial class X2DSUnlimitModule : FhModule {
             }
             #endregion Unknown1
 
-#region ListItemBB
+#region ListItemBG
             // Draw background rectangles under abilities
             iVar4 = _TOGetRtcRatio(puVar1);
             int barValue = ((int)uVar2 / 2) * 0x199;
@@ -761,10 +666,10 @@ public partial class X2DSUnlimitModule : FhModule {
 #endregion ListItemBG
 
 
-#region Ability Visibilty and Current Selection
-            //Replaced table reference D63E78 with custom table
-            byte ds = FhUtil.get_at<byte>(0x12c0266); // current dressphere ID
-            //byte job_index = (byte)(CustomTOMenuStartJobAbilityWindow_DS_Table[ds] & 0xFF); // Derived Job Index
+#region Selected Ability to Learn
+            
+            byte ds = FhUtil.get_at<byte>(0x12c0266); // menu: current dressphere ID
+            //byte job_index = (byte)(CustomTOMenuStartJobAbilityWindow_DS_Table[ds] & 0xFF); // updated to not need to refence this table
             int job_offset = (int)ds * 0x110;
             int ability_index = (int)uVar2;
 
@@ -773,8 +678,8 @@ public partial class X2DSUnlimitModule : FhModule {
             DSAbilityListData* job = &abi_list_data[ds];
             DSAbilityListDataAbility* ability = &job->Abilities[ability_index];
 
-
-            if((ability->is_visible) && (-1.5707964 < local_28[0]) && (local_28[0] < 1.5707964))
+            // Selected ability to learn highlight handler:
+            if ((ability->is_visible) && (-1.5707964 < local_28[0]) && (local_28[0] < 1.5707964))
             {
                 iVar4 = _TOGetRtcRatio(puVar1);
                 if ((ability->is_selected) && (iVar4 == 0x1000))
@@ -800,12 +705,10 @@ public partial class X2DSUnlimitModule : FhModule {
                     // Render Ability selection highlight, last parameter is colour
                     _FUN_007B0F50(fixedD, fixedC, fixedB, fixedA, 0x3); //TOMkpScrollWaveXYWH?
 
-                    // Alternate colour
-                    //_FUN_007B0F50(fixedD, fixedC, fixedB, fixedA, 0x11); //TOMkpScrollWaveXYWH?
                     _TOKickPacket();
                 }
-#endregion Ability Visibility and Current Selection
-
+#endregion Selected Ability to Learn
+#region Ability Name and Icon Rendering
 
                 _TOMenuOpenPkt();
                 _TOMenuChangeFrameAccPlate(6);
@@ -821,12 +724,13 @@ public partial class X2DSUnlimitModule : FhModule {
                 _TOMkpComIconNameClut(ability_list_data_ptr[ds].Abilities[ability_index].ability_id, param_2 + 6, test_double_as_int, 0);
                 _FFX2_Reset_UI_Scale();
 
+#endregion Ability Name and Icon Rendering
+#region AP / Needed AP and Master Icons
 
                 // Handle AP / Needed AP vs Master icons
 
                 //byte* DAT_011bb212 = FhUtil.ptr_at<byte>(0xdbb212);
                 //if ((DAT_011bb212)[ability_index * 0x10 + job_offset] == 1)
-
                 if (ability->is_mastered)
                 {
 
@@ -866,16 +770,17 @@ public partial class X2DSUnlimitModule : FhModule {
 
                         double DAT_00cad890 = FhUtil.get_at<double>(0x8ad890);
                         double val = _offsetAdjust_Y(0x16) + local_30 - DAT_00cad890;
-                        int fixedVal = (int)val;
+                        int trunc_val = (int)val;
 
                         // Render AP / Needed AP
                         fixed (byte* pText = local_18) {
-                            _FUN_007AE430(pText, param_2 + 0xc3, fixedVal, 0x80, 0x80, 0x80, 0x80); // TOMkpEasyMesFontLRight?
+                            _FUN_007AE430(pText, param_2 + 0xc3, trunc_val, 0x80, 0x80, 0x80, 0x80); // TOMkpEasyMesFontLRight?
                         }
                     }
                     else
                     {
                         // Non-Western text handling?
+
                         if (local_18[0] != 0)
                         {
                             int i = 0;
@@ -893,18 +798,19 @@ public partial class X2DSUnlimitModule : FhModule {
 
                         fVar7 = (double)_offsetAdjust_Y(10);
                         fixed (byte* pText = local_18) {
-                            // TOAdpMesFontLXYZClutTypeRGBAChangeFontType caller (here) / TOMkpAscStrRightRGBA (switch ver)
+                            // TOAdpMesFontLXYZClutTypeRGBAChangeFontType caller (PC) / TOMkpAscStrRightRGBA (Switch ver.)
                             _FUN_007aeda0((int)pText, (param_2 + 0xc3), (int)(fVar7 + param_3));
                         }
                     }
                 }
+#endregion AP / Needed AP and Master Icons
+
+
                 _FFX2_Reset_UI_Scale();
                 _TOMkpResetFrameAcc();
-
                 fixed (float* pAlpha = &local_28[0]) {
                     _TOMkpExPlateParam(param_2, param_3, (int)pAlpha, 6, 0);
                 }
-
                 _TOKickPacket();
                 return;
             }
@@ -913,6 +819,12 @@ public partial class X2DSUnlimitModule : FhModule {
 
     }
 
+    /// <summary>
+    /// When viewing a Dressphere's ability list, pressing a button moves you to the next
+    /// dressphere's list. This function has been changed so it works with Freelancer, Leblanc Goon
+    /// and theoretically more dresspheres.
+    /// </summary>
+    /// <returns> Dressphere ID - of Dressphere to switch to?</returns>
     public unsafe uint h_TOMenuNextJobList() {
         int attempts = 0;
         byte current = 0;
@@ -927,10 +839,9 @@ public partial class X2DSUnlimitModule : FhModule {
             uint slot = (uint)current % ability_list_count;
 
             // if valid Dressphere/Ability data , break out of loop
-            if (ability_list_data_ptr[slot].i0 == 1)
+            if (ability_list_data_ptr[slot].is_valid == 1)
                 break;
 
-            
             attempts++;
             // fallback
             if (attempts > ability_list_count) {
@@ -946,6 +857,13 @@ public partial class X2DSUnlimitModule : FhModule {
         return (uint)ability_list_data_ptr[final_slot].ds_id;
     }
 
+
+    /// <summary>
+    /// When viewing a Dressphere's ability list, pressing a button moves you to the previous
+    /// dressphere's list. This function has been changed so it works with Freelancer, Leblanc Goon
+    /// and theoretically more dresspheres.
+    /// </summary>
+    /// <returns> Dressphere ID - of Dressphere to switch to?</returns>
     public unsafe uint h_TOMenuPrevJobList() {
         int attempts = 0;
         byte current = 0;
@@ -960,7 +878,7 @@ public partial class X2DSUnlimitModule : FhModule {
             uint slot = (uint)current % ability_list_count;
 
             // if valid Dressphere/Ability data , break out of loop
-            if (ability_list_data_ptr[slot].i0 == 1)
+            if (ability_list_data_ptr[slot].is_valid == 1)
                 break;
 
             attempts++;
@@ -978,14 +896,22 @@ public partial class X2DSUnlimitModule : FhModule {
         return (uint)ability_list_data_ptr[finalSlot].ds_id;
     }
 
+
     public uint h_TOGetRomHelp(uint param_1) {
         return _TOGetRomHelp_handle.orig_fptr.Invoke(param_1);
     }
+
 
     public void h_TkMenuSetHelpMessage(int param_1) {
         _TkMenuSetHelpMessage_handle.orig_fptr.Invoke(param_1);
     }
 
+    /// <summary>
+    /// Something to do with ability Help message display.
+    /// This function has been altered to use the NativeAlloc DSAbilityList Data so it works
+    /// correctly.
+    /// </summary>
+    /// <param name="param_1"></param>
     public unsafe void h_FUN_777C60(int param_1) {
         sbyte rawIndex = *(sbyte*)(param_1 + 0x48);
         uint uVar2 = (uint)Math.Max((int)rawIndex, 0);
@@ -998,25 +924,25 @@ public partial class X2DSUnlimitModule : FhModule {
         uint helpResult = 0;
 
         if (*(int*)(param_1 + 0x98) != 0) {
-            byte ds = FhUtil.get_at<byte>(0x12c0266);
+            byte ds_num = FhUtil.get_at<byte>(0x12c0266);
             DSAbilityListData* abi_list_data = ability_list_data_ptr;
-            uint job_num = ds;
+            
 
             int rowOffset = *(int*)(param_1 + 0x5c + uVar2 * 4);
             short cursorOffset = *(short*)(param_1 + 0x4c);
             int slot = rowOffset + cursorOffset * 2;
 
-            ref DSAbilityListDataAbility ability = ref abi_list_data[job_num].Abilities[slot];
+            ref DSAbilityListDataAbility ability = ref abi_list_data[ds_num].Abilities[slot];
 
+            // if ability is visible, get ability help message
             if (ability.is_visible) {
                 helpResult = h_TOGetRomHelp(ability.ability_id);
             }
-            // else helpResult stays 0
+            
         }
-        // if [param_1+0x98] == 0, helpResult also stays 0
 
         if (*(sbyte*)(param_1 + 0x48) < 0) {
-            return; // early exit, TkMenuSetHelpMessage never called
+            return;
         }
 
         h_TkMenuSetHelpMessage((int)helpResult);
