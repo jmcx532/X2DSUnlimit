@@ -8,7 +8,7 @@ A mod for Final Fantasy X-2 that adds 2 extra dresspheres to the main game.
 
 Customizing the dressphere can currently be done via editing files in `src/AltChrs`  and using the External File loader to modify certain files.
 
-A full guide can be found in this repo's [wiki](https://github.com/jmcx532/X2DSUnlimit/wiki).
+A full guide can be found in this repo's [wiki](https://github.com/jmcx532/X2DSUnlimit/wiki). (not yet, just an outline so far)
 
 # Credits
 [Fahrenheit](https://github.com/fahrenheit-crew/fahrenheit) - The Fahrenheit crew
