@@ -19,7 +19,7 @@ public partial class X2DSUnlimitModule : FhModule {
     bool FUN_6083B0_runOnce = false;
     //param_1 is a custom excel bin number, 8 is Job.bin
     public int h_FUN_6083B0(uint param_1) {
-        int original_result = _FUN_6083B0_handle.orig_fptr.Invoke(param_1);
+        int original_result = _FUN_6083B0.chain_from(h_FUN_6083B0).fnptr!(param_1);
 
         if (param_1 == 8 && !FUN_6083B0_runOnce) {
             FUN_6083B0_runOnce = true;

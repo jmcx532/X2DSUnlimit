@@ -102,7 +102,7 @@ public partial class X2DSUnlimitModule : FhModule {
             *(float*)(chr_base + 0x788) = motion_data.weight / 10000.0f; //50;//(float)*(int*)(psVar3 + 0x1a) / 10000.0;
         }
         else {
-            _MsSetRamMotionChrData_handle.orig_fptr.Invoke(chr_id, job_id);
+            _MsSetRamMotionChrData.chain_from(h_MsSetRamMotionChrData).fnptr!(chr_id, job_id);
         }
     }
 

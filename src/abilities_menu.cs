@@ -31,30 +31,30 @@ public struct DSAbilityListData {
 public partial class X2DSUnlimitModule : FhModule {
 
     public void h_TOMenuSetMacroCommandType(int param_1, int param_2, byte param_3) {
-        _TOMenuSetMacroCommandType_handle.orig_fptr.Invoke(param_1, param_2, param_3);
+        _TOMenuSetMacroCommandType.chain_from(h_TOMenuSetMacroCommandType).fnptr!(param_1, param_2, param_3);
         return;
     }
 
     public int h_TOBtlGetComName(uint param_1) {
-        return _TOBtlGetComName_handle.orig_fptr.Invoke(param_1);
+        return _TOBtlGetComName.chain_from(h_TOBtlGetComName).fnptr!(param_1);
     }
 
     public void h_TOMenuSetMacroCommandValue(int param_1, int param_2, uint param_3) {
-        _TOMenuSetMacroCommandValue_handle.orig_fptr.Invoke(param_1, param_2, param_3);
+        _TOMenuSetMacroCommandValue.chain_from(h_TOMenuSetMacroCommandValue).fnptr!(param_1, param_2, param_3);
         return;
     }
 
     public uint h_TOGetMenuText(uint param_1) {
-        return _TOGetMenuText_handle.orig_fptr.Invoke(param_1);
+        return _TOGetMenuText.chain_from(h_TOGetMenuText).fnptr!(param_1);
     }
 
     public uint h_SndSepPlaySimple(uint param_1) {
-        return _SndSepPlaySimple_handle.orig_fptr.Invoke(param_1);
+        return _SndSepPlaySimple.chain_from(h_SndSepPlaySimple).fnptr!(param_1);
     }
 
     public unsafe void* h_memset(void* _Dst, int _Val, uint _Size)
     {
-        return _memset_handle.orig_fptr.Invoke(_Dst, _Val, _Size);
+        return _memset.chain_from(h_memset).fnptr!(_Dst, _Val, _Size);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public partial class X2DSUnlimitModule : FhModule {
         int special_ds_owned;
         uint ds_count;
 
-        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);// list of dressphere IDs (byte), unique ones on current grid, 
+        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);// list of dressphere IDs (byte), unique ones on current grid,
         byte* ds_amount = FhUtil.ptr_at<byte>(0x9f6018); //this is speculative
 
         ds_count = 0;
@@ -270,7 +270,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
         Job* job_data;
         int local_c;
-        
+
         // Special Dressphere support unit handling
         switch (job_id) {
             case 0x5010: chr_id = 3; break;
@@ -326,7 +326,7 @@ public partial class X2DSUnlimitModule : FhModule {
                     // Mark ability currently being learned for highlight
                     uint current_learn_target = h_MsGetSaveLearn(chr_id, job_id);
                     if (current_learn_target == ability.ability_id) {
-                        ability.is_selected = true;   
+                        ability.is_selected = true;
                     }
                     break;
                 }
@@ -387,7 +387,7 @@ public partial class X2DSUnlimitModule : FhModule {
         }
 
     }
-        
+
 
     // In Abilities Menu, job list - handles command window preview and auto abilities?
     // Also 16 x ability list
@@ -409,7 +409,7 @@ public partial class X2DSUnlimitModule : FhModule {
         int iVar9;
         int iVar10;
         int iVar11;
-        
+
 
 
 
@@ -437,7 +437,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 num_abilities_to_check = 2;
                 abilities_addr = job_addr + 0xb0; // Job, creature data, 2 abiilities
             }
-            
+
 
             if (abilities_addr != 0) //
             {
@@ -445,18 +445,18 @@ public partial class X2DSUnlimitModule : FhModule {
                 {
                     requirement = *(ushort*)(abilities_addr + j * 4);
                     ability = *(ushort*)(abilities_addr + 2 + j * 4);
-        
+
                     if (ability != 0)
                     {
                         // Checks
                         iVar8 = (int)h_MsCheckAbility(chr_num, requirement, (int)chr_level); // does the character have the prereq
-                        iVar9 = (int)h_FUN_6294f0((uint)ability, (int)DAT_00df9258_addr, abilities_checked);// Excel/MsGetRomAbility related 
+                        iVar9 = (int)h_FUN_6294f0((uint)ability, (int)DAT_00df9258_addr, abilities_checked);// Excel/MsGetRomAbility related
                         iVar10 = h_MsCheckLearnCommand((byte)chr_num, ability);
                         iVar11 = (int)h_MsGetSaveCommand(chr_num, (uint)ability);
 
                         bool left_condition = is_monster || param_4 == 0 || requirement == 0 || iVar11 != 0;
                         bool right_condition = (iVar8 != 0 && iVar9 != 0) && (iVar10 != 0 && (abilities_checked < 0x10));
-                        
+
                         // If conditions are met
                         if (left_condition && right_condition)
                         {
@@ -468,7 +468,7 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
 
                 // if reached maximum abilities return
-                if (abilities_checked > 0xF) 
+                if (abilities_checked > 0xF)
                 {
                     goto LAB_00629c2d;
                 }
@@ -476,7 +476,7 @@ public partial class X2DSUnlimitModule : FhModule {
         }
 
         // null, mark invalid the last abilities?
-        for (int i = abilities_checked; i < 16; i++) 
+        for (int i = abilities_checked; i < 16; i++)
         {
             DAT_00df9258[i] = 0x00FF;
         }
@@ -487,7 +487,7 @@ public partial class X2DSUnlimitModule : FhModule {
             *param_3 = 0x10;
         }
         return (int)DAT_00df9258_addr; // Returns mem location of added command/abilities From Accessories?
-        
+
     }
 
     /// <summary>
@@ -506,7 +506,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
             // Intercept switch case -> user selects command to learn ( not mastered )
             if ((switch_data_777864[case_id] & 0xFFFF) == 0x762F) {
-                
+
                 byte job_num = FhUtil.get_at<byte>(0x12c0266);
                 uint menu_chr_id = FhUtil.get_at<uint>(0x12c0270);
                 uint menu_job_id = FhUtil.get_at<uint>(0x12c0274);
@@ -531,7 +531,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
             // Intercept switch case -> user selects command to learn (already learned)
             if ((switch_data_777864[case_id] & 0xFFFF) == 0x7587) {
-                
+
                 int slot = *(int*)(param_1 + 0x5c) + *(short*)(param_1 + 0x4c) * 2;
                 byte job_num = FhUtil.get_at<byte>(0x12c0266);
                 //byte job_num = (byte)CustomTOMenuStartJobAbilityWindow_DS_Table[ds];
@@ -562,10 +562,10 @@ public partial class X2DSUnlimitModule : FhModule {
                 *(uint*)(param_1 + 0x28) = 8;
                 return;
             }
-            
+
             // Unmodded cases use vanilla behaviour
-            _FUN_777270_handle.orig_fptr.Invoke(param_1);
-            
+            _FUN_777270.chain_from(h_FUN_777270).fnptr!(param_1);
+
         }
     }
 
@@ -631,16 +631,16 @@ public partial class X2DSUnlimitModule : FhModule {
             byte* DAT_016c0278 = FhUtil.ptr_at<byte>(0x12c0278);
             puVar1 = (int)((int)(DAT_016c0278) + uVar3 * 0x10);
 
-            iVar4 = _TOGetRtcValue(puVar1);
-            iVar5 = _TOGetRtcRatio(puVar1);
+            iVar4 = _TOGetRtcValue.fnptr!(puVar1);
+            iVar5 = _TOGetRtcRatio.fnptr!(puVar1);
             if (iVar5 / 2 + 0x800 < 0x800)
             {
-                iVar5 = _TOGetRtcRatio(puVar1);
+                iVar5 = _TOGetRtcRatio.fnptr!(puVar1);
                 local_28[0] = (float)((float)(iVar5 / 2) * 3.1415927);
             }
             else
             {
-                iVar5 = _TOGetRtcRatio(puVar1);
+                iVar5 = _TOGetRtcRatio.fnptr!(puVar1);
                 local_28[0] = (float)((float)(0x800 - iVar5 / 2) * -3.1415927);
             }
 
@@ -654,20 +654,20 @@ public partial class X2DSUnlimitModule : FhModule {
 
 #region ListItemBG
             // Draw background rectangles under abilities
-            iVar4 = _TOGetRtcRatio(puVar1);
+            iVar4 = _TOGetRtcRatio.fnptr!(puVar1);
             int barValue = ((int)uVar2 / 2) * 0x199;
             if (iVar4 != 0)
             {
                 fixed (float* pAlpha = &local_28[0]) {
                     // Render backplates under Ability Icon, name, AP
-                    _TOMenuDrawRotPlate(param_2, param_3, (int)pAlpha, 6, 0, barValue, 0);
+                    _TOMenuDrawRotPlate.fnptr!(param_2, param_3, (int)pAlpha, 6, 0, barValue, 0);
                 }
             }
 #endregion ListItemBG
 
 
 #region Selected Ability to Learn
-            
+
             byte ds = FhUtil.get_at<byte>(0x12c0266); // menu: current dressphere ID
             //byte job_index = (byte)(CustomTOMenuStartJobAbilityWindow_DS_Table[ds] & 0xFF); // updated to not need to refence this table
             int job_offset = (int)ds * 0x110;
@@ -681,48 +681,48 @@ public partial class X2DSUnlimitModule : FhModule {
             // Selected ability to learn highlight handler:
             if ((ability->is_visible) && (-1.5707964 < local_28[0]) && (local_28[0] < 1.5707964))
             {
-                iVar4 = _TOGetRtcRatio(puVar1);
+                iVar4 = _TOGetRtcRatio.fnptr!(puVar1);
                 if ((ability->is_selected) && (iVar4 == 0x1000))
                 {
-                    _TOMenuOpenPkt();
+                    _TOMenuOpenPkt.fnptr!();
 
                     double DAT_00c32010_value = FhUtil.get_at<double>(0x832010);
-                    double valA = _offsetAdjust_Y(0x3b) - DAT_00c32010_value;
+                    double valA = _offsetAdjust_Y.fnptr!(0x3b) - DAT_00c32010_value;
                     int fixedA = (int)valA;
 
                     // W = offsetAdjust_X(0x2d8)
-                    double valB = _offsetAdjust_X(0x2d8);
+                    double valB = _offsetAdjust_X.fnptr!(0x2d8);
                     int fixedB = (int)valB;
 
                     // Y = offsetAdjust_Y(7) + local_30 (savedCount / param_3)
-                    double valC = _offsetAdjust_Y(7) + local_30;
+                    double valC = _offsetAdjust_Y.fnptr!(7) + local_30;
                     int fixedC = (int)valC;
 
                     // X = offsetAdjust_X(9) + param_2
-                    double valD = _offsetAdjust_X(9) + param_2;
+                    double valD = _offsetAdjust_X.fnptr!(9) + param_2;
                     int fixedD = (int)valD;
 
                     // Render Ability selection highlight, last parameter is colour
-                    _FUN_007B0F50(fixedD, fixedC, fixedB, fixedA, 0x3); //TOMkpScrollWaveXYWH?
+                    _FUN_007B0F50.fnptr!(fixedD, fixedC, fixedB, fixedA, 0x3); //TOMkpScrollWaveXYWH?
 
-                    _TOKickPacket();
+                    _TOKickPacket.fnptr!();
                 }
 #endregion Selected Ability to Learn
 #region Ability Name and Icon Rendering
 
-                _TOMenuOpenPkt();
-                _TOMenuChangeFrameAccPlate(6);
-                _FFX2_Set_UI_Scale(0x3f55f15f, 0x3f313b14);
-                _TOGetFFXLang();
+                _TOMenuOpenPkt.fnptr!();
+                _TOMenuChangeFrameAccPlate.fnptr!(6);
+                _FFX2_Set_UI_Scale.fnptr!(0x3f55f15f, 0x3f313b14);
+                _TOGetFFXLang.fnptr!();
 
                 double DAT_00cad868 = FhUtil.get_at<double>(0x8ad868);
-                double test_double = _offsetAdjust_Y(0xf) + local_30 - DAT_00cad868;
+                double test_double = _offsetAdjust_Y.fnptr!(0xf) + local_30 - DAT_00cad868;
                 int test_double_as_int = (int)(test_double);
 
                 // Render Ability icon and Name
                 //_TOMkpComIconNameClut(*(uint*)(DAT_011bb214_addr + ability_index * 0x10 + job_offset), param_2 + 6, test_double_as_int, 0);
-                _TOMkpComIconNameClut(ability_list_data_ptr[ds].Abilities[ability_index].ability_id, param_2 + 6, test_double_as_int, 0);
-                _FFX2_Reset_UI_Scale();
+                _TOMkpComIconNameClut.fnptr!(ability_list_data_ptr[ds].Abilities[ability_index].ability_id, param_2 + 6, test_double_as_int, 0);
+                _FFX2_Reset_UI_Scale.fnptr!();
 
 #endregion Ability Name and Icon Rendering
 #region AP / Needed AP and Master Icons
@@ -734,18 +734,18 @@ public partial class X2DSUnlimitModule : FhModule {
                 if (ability->is_mastered)
                 {
 
-                    _FFX2_Set_UI_Scale(0x3f092492, 0x3f333333);
+                    _FFX2_Set_UI_Scale.fnptr!(0x3f092492, 0x3f333333);
 
                     FhUtil.set_at<byte>(0x12f0ac0, 1);
 
-                    int timer_val = _TkMenuGetTimer();
+                    int timer_val = _TkMenuGetTimer.fnptr!();
 
                     double DAT_00cad890 = FhUtil.get_at<double>(0x8ad890);
-                    double val = _offsetAdjust_Y(0x14) + local_30 - DAT_00cad890;
+                    double val = _offsetAdjust_Y.fnptr!(0x14) + local_30 - DAT_00cad890;
                     int fixedVal = (int)val;
 
                     // Render Ability Mastered icons
-                    _TOMkpShape2dMenu(param_2 + 0xa2, fixedVal, 8, timer_val);
+                    _TOMkpShape2dMenu.fnptr!(param_2 + 0xa2, fixedVal, 8, timer_val);
 
                     FhUtil.set_at<byte>(0x12f0ac0, 0);
                 }
@@ -764,17 +764,17 @@ public partial class X2DSUnlimitModule : FhModule {
                     Array.Copy(bytes, local_18, len); // copy into buffer
                     local_18[len] = 0; // null terminate
 
-                    iVar4 = (int)_TOGetFFXLang();
+                    iVar4 = (int)_TOGetFFXLang.fnptr!();
                     if (iVar4 == 0) {
-                        _FFX2_Set_UI_Scale(0x3eec4ec5, 0x3f19999a);
+                        _FFX2_Set_UI_Scale.fnptr!(0x3eec4ec5, 0x3f19999a);
 
                         double DAT_00cad890 = FhUtil.get_at<double>(0x8ad890);
-                        double val = _offsetAdjust_Y(0x16) + local_30 - DAT_00cad890;
+                        double val = _offsetAdjust_Y.fnptr!(0x16) + local_30 - DAT_00cad890;
                         int trunc_val = (int)val;
 
                         // Render AP / Needed AP
                         fixed (byte* pText = local_18) {
-                            _FUN_007AE430(pText, param_2 + 0xc3, trunc_val, 0x80, 0x80, 0x80, 0x80); // TOMkpEasyMesFontLRight?
+                            _FUN_007AE430.fnptr!(pText, param_2 + 0xc3, trunc_val, 0x80, 0x80, 0x80, 0x80); // TOMkpEasyMesFontLRight?
                         }
                     }
                     else
@@ -794,24 +794,24 @@ public partial class X2DSUnlimitModule : FhModule {
                                 i++;
                             } while (local_18[i] != 0);
                         }
-                        _FFX2_Set_UI_Scale(0x3f55f15f, 0x3f313b14);
+                        _FFX2_Set_UI_Scale.fnptr!(0x3f55f15f, 0x3f313b14);
 
-                        fVar7 = (double)_offsetAdjust_Y(10);
+                        fVar7 = (double)_offsetAdjust_Y.fnptr!(10);
                         fixed (byte* pText = local_18) {
                             // TOAdpMesFontLXYZClutTypeRGBAChangeFontType caller (PC) / TOMkpAscStrRightRGBA (Switch ver.)
-                            _FUN_007aeda0((int)pText, (param_2 + 0xc3), (int)(fVar7 + param_3));
+                            _FUN_007aeda0.fnptr!((int)pText, (param_2 + 0xc3), (int)(fVar7 + param_3));
                         }
                     }
                 }
 #endregion AP / Needed AP and Master Icons
 
 
-                _FFX2_Reset_UI_Scale();
-                _TOMkpResetFrameAcc();
+                _FFX2_Reset_UI_Scale.fnptr!();
+                _TOMkpResetFrameAcc.fnptr!();
                 fixed (float* pAlpha = &local_28[0]) {
-                    _TOMkpExPlateParam(param_2, param_3, (int)pAlpha, 6, 0);
+                    _TOMkpExPlateParam.fnptr!(param_2, param_3, (int)pAlpha, 6, 0);
                 }
-                _TOKickPacket();
+                _TOKickPacket.fnptr!();
                 return;
             }
         }
@@ -898,12 +898,12 @@ public partial class X2DSUnlimitModule : FhModule {
 
 
     public uint h_TOGetRomHelp(uint param_1) {
-        return _TOGetRomHelp_handle.orig_fptr.Invoke(param_1);
+        return _TOGetRomHelp.chain_from(h_TOGetRomHelp).fnptr!(param_1);
     }
 
 
     public void h_TkMenuSetHelpMessage(int param_1) {
-        _TkMenuSetHelpMessage_handle.orig_fptr.Invoke(param_1);
+        _TkMenuSetHelpMessage.chain_from(h_TkMenuSetHelpMessage).fnptr!(param_1);
     }
 
     /// <summary>
@@ -926,7 +926,7 @@ public partial class X2DSUnlimitModule : FhModule {
         if (*(int*)(param_1 + 0x98) != 0) {
             byte ds_num = FhUtil.get_at<byte>(0x12c0266);
             DSAbilityListData* abi_list_data = ability_list_data_ptr;
-            
+
 
             int rowOffset = *(int*)(param_1 + 0x5c + uVar2 * 4);
             short cursorOffset = *(short*)(param_1 + 0x4c);
@@ -938,7 +938,7 @@ public partial class X2DSUnlimitModule : FhModule {
             if (ability.is_visible) {
                 helpResult = h_TOGetRomHelp(ability.ability_id);
             }
-            
+
         }
 
         if (*(sbyte*)(param_1 + 0x48) < 0) {

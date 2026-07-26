@@ -19,27 +19,27 @@ public partial class X2DSUnlimitModule : FhModule
             if (param_2 == 34)
             {
                 //_logger.Info("Y enters Freelancer, Overriding param_2");
-                _F791610_handle.orig_fptr.Invoke(param_1, 17, param_3);
+                _F791610.chain_from(h_F791610).fnptr!(param_1, 17, param_3);
                 return;
             }
 
             if (param_2 == 56)
             {
                 //_logger.Info("R enters Freelancer, Overriding param_2");
-                _F791610_handle.orig_fptr.Invoke(param_1, 49, param_3);
+                _F791610.chain_from(h_F791610).fnptr!(param_1, 49, param_3);
                 return;
             }
 
             if (param_2 == 78)
             {
                 //_logger.Info("P enters Freelancer, Overriding param_2");
-                _F791610_handle.orig_fptr.Invoke(param_1, 64, param_3);
+                _F791610.chain_from(h_F791610).fnptr!(param_1, 64, param_3);
                 return;
             }
 
         }
 
-        _F791610_handle.orig_fptr.Invoke(param_1, param_2, param_3);
+        _F791610.chain_from(h_F791610).fnptr!(param_1, param_2, param_3);
         return;
     }
 
@@ -49,7 +49,7 @@ public partial class X2DSUnlimitModule : FhModule
 
         //_logger.Info("Param_1 is: " + param_1.ToString());
         //_logger.Info("Param_2 is: " + param_2.ToString());
-        byte original_result = _MsGetSaveDressUpCount_handle.orig_fptr.Invoke(param_1, param_2);
+        byte original_result = _MsGetSaveDressUpCount.chain_from(h_MsGetSaveDressUpCount).fnptr!(param_1, param_2);
         //_logger.Info("Return result is: " + original_result.ToString());
 
         if (original_result < 2)
@@ -66,14 +66,14 @@ public partial class X2DSUnlimitModule : FhModule
     // read config dressphere animations setting
     public uint h_MsGetSaveConfigChangeEffect()
     {
-        uint original_result = _MsGetSaveConfigChangeEffect_handle.orig_fptr.Invoke();
+        uint original_result = _MsGetSaveConfigChangeEffect.chain_from(h_MsGetSaveConfigChangeEffect).fnptr!();
         //_logger.Info("Return result is: " + original_result.ToString());
         return original_result;
     }
     // read config dressphere animations setting
     public uint h_MsGetRamConfigChangeEffect()
     {
-        uint original_result = _MsGetRamConfigChangeEffect_handle.orig_fptr.Invoke();
+        uint original_result = _MsGetRamConfigChangeEffect.chain_from(h_MsGetRamConfigChangeEffect).fnptr!();
         //_logger.Info("Return result is: " + original_result.ToString());
         return original_result;
     }

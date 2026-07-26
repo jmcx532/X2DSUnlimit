@@ -1,6 +1,6 @@
-﻿/* These functions originally used __aullshr() and Garment Grid data.
+﻿/* These functions originally used __aullshr.fnptr!() and Garment Grid data.
  * Adding Freelancer and Leblanc Goon adds non-vanilla values onto Garment Grid data.
- * The result of __aullshr() is often used for memory reads, and is on the stack.
+ * The result of __aullshr.fnptr!() is often used for memory reads, and is on the stack.
  * These functions have been re-implemented to prevent crashes.
  */
 
@@ -10,7 +10,7 @@ public partial class X2DSUnlimitModule : FhModule
 {
     public uint h_MsGetSavePlate(uint param_1)
     {
-        return _MsGetSavePlate_handle.orig_fptr.Invoke(param_1);
+        return _MsGetSavePlate.chain_from(h_MsGetSavePlate).fnptr!(param_1);
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public partial class X2DSUnlimitModule : FhModule
     /// <returns>Dressphere ID - in slot?</returns>
     public uint h_kyIsUsedPoint(uint plate_id, uint gg_slot)
     {
-        return _kyIsUsedPoint_handle.orig_fptr.Invoke(plate_id, gg_slot);
+        return _kyIsUsedPoint.chain_from(h_kyIsUsedPoint).fnptr!(plate_id, gg_slot);
     }
 
     /// <summary>
@@ -75,17 +75,17 @@ public partial class X2DSUnlimitModule : FhModule
     public byte h_kyGetCursorPoint(int chr_id, int plate_id)
     {
         // should prevent crashes with GG slot in memory set to 32 (Freelancer)
-        if (chr_id == 0x01000000) { 
-            return _kyGetCursorPoint_handle.orig_fptr.Invoke(0, plate_id); 
+        if (chr_id == 0x01000000) {
+            return _kyGetCursorPoint.chain_from(h_kyGetCursorPoint).fnptr!(0, plate_id);
         }
 
-        byte slot = _kyGetCursorPoint_handle.orig_fptr.Invoke(chr_id, plate_id);
+        byte slot = _kyGetCursorPoint.chain_from(h_kyGetCursorPoint).fnptr!(chr_id, plate_id);
         return slot;
     }
 
     /// <summary>
-    /// safety hook, this function in the original calls _aullshr() which takes in Garment Grid data manipulates it and the game can use this for memory reads. With new dressphere IDs, this causes issues.
-    /// 
+    /// safety hook, this function in the original calls _aullshr.fnptr!() which takes in Garment Grid data manipulates it and the game can use this for memory reads. With new dressphere IDs, this causes issues.
+    ///
     /// Populates the GG Inventory list, keeps a record of plates with spheres on them etc.
     /// </summary>
     /// <returns> Number of Garment Grids owned. </returns>

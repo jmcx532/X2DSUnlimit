@@ -1,7 +1,11 @@
-﻿<Project Sdk="Fahrenheit.Sdk/1.0.0-alpha09">
+﻿<Project Sdk="Fahrenheit.Sdk/1.0.0-alpha11">
     <PropertyGroup>
         <AssemblyName>X2DSUnlimit</AssemblyName>
         <AssemblyTitle>X2DSUnlimit</AssemblyTitle>
         <Product>X2DSUnlimit</Product>
+        <Description>A mod to increase the number of available dresspheres.</Description>
+        <Authors>jmcx532</Authors>
+        <RepositoryUrl>https://github.com/jmcx532/X2DSUnlimit.git</RepositoryUrl>
+        <FhManifestFlags>SEPARATE_SAVES</FhManifestFlags>
     </PropertyGroup>
 </Project>
