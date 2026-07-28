@@ -286,7 +286,7 @@ public partial class X2DSUnlimitModule : FhModule
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int TOGetFaceIndex2(int param_1, uint param_2);
     private static FhMethodHandle<TOGetFaceIndex2> _TOGetFaceIndex2 =>
-        new ( new FhMethodLocation("FFX-2.exe", 0x393910) );
+        new ( new FhMethodLocation("FFX-2.exe", 0x393190) );
 
     // hooked to get VoiceIDMapper pointer -> AltChrs -> sound.cs
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
