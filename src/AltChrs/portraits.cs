@@ -4,7 +4,7 @@ public partial class X2DSUnlimitModule : FhModule {
     public int h_TOGetFaceIndex2(int chr_id, uint job_id) {
 
         /* // for logging purposes
-        int original_result = _TOGetFaceIndex2_handle.orig_fptr.Invoke(chr_id, job_id);
+        int original_result = _TOGetFaceIndex2.chain_from(h_TOGetFaceIndex2).fnptr!(chr_id, job_id);
         _logger.Info("Param_1 is: " + chr_id.ToString());
         _logger.Info("Param_2 is: " + job_id.ToString());
         _logger.Info("Return result: " + original_result.ToString());
@@ -37,7 +37,7 @@ public partial class X2DSUnlimitModule : FhModule {
             return 264; // Seymour
         }
 
-        return _TOGetFaceIndex2_handle.orig_fptr.Invoke(chr_id, job_id); // forces return of 0x52 which removes all portrait images
+        return _TOGetFaceIndex2.chain_from(h_TOGetFaceIndex2).fnptr!(chr_id, job_id); // forces return of 0x52 which removes all portrait images
     }
 }
 

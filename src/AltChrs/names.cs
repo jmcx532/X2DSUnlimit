@@ -85,7 +85,7 @@ public partial class X2DSUnlimitModule : FhModule {
     }
 
     public unsafe byte* h_MsGetSaveChrName(int chr_id) {
-        return _MsGetSaveChrName_handle.orig_fptr.Invoke(chr_id);
+        return _MsGetSaveChrName.chain_from(h_MsGetSaveChrName).fnptr!(chr_id);
     }
 
     
@@ -117,7 +117,7 @@ public partial class X2DSUnlimitModule : FhModule {
     /// TOMenuSetHelpMes is run by kySetHelpJob2 and it takes a memory address of a null terminated byte string as a parameter.
     /// </summary>
     public void h_TOMenuSetHelpMes(int addr_of_txt_bytes) {
-        _TOMenuSetHelpMes_handle.orig_fptr.Invoke(addr_of_txt_bytes);
+        _TOMenuSetHelpMes.chain_from(h_TOMenuSetHelpMes).fnptr!(addr_of_txt_bytes);
     }
 
     public unsafe void h_kySetHelpJob2(uint job_id) {
@@ -145,7 +145,7 @@ public partial class X2DSUnlimitModule : FhModule {
             h_TOMenuSetHelpMes(string_table_base + help_string_offset);
         }
         else {
-            _kySetHelpJob2_handle.orig_fptr.Invoke(job_id);
+            _kySetHelpJob2.chain_from(h_kySetHelpJob2).fnptr!(job_id);
         }
     }
 

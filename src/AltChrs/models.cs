@@ -10,7 +10,7 @@ public partial class X2DSUnlimitModule : FhModule {
     //624f90 - used to overwrite the character model to be loaded in battle
     public unsafe uint h_MsGetChrID(uint chr_id) {
         //invoke as normal
-        uint original_result = _MsGetChrID_handle.orig_fptr.Invoke(chr_id);
+        uint original_result = _MsGetChrID.chain_from(h_MsGetChrID).fnptr!(chr_id);
 
         //get character battle info address, record original model
         int chr_base_addr = h_MsGetChr(chr_id);

@@ -15,7 +15,7 @@ public partial class X2DSUnlimitModule : FhModule {
     /// </summary>
     public void h_MsBtlChrGetMem() {
 
-        _MsBtlChrGetMem_handle.orig_fptr.Invoke();
+        _MsBtlChrGetMem.chain_from(h_MsBtlChrGetMem).fnptr!();
         system_01_addr = FhUtil.get_at<nint>(0x9F882C); 
 
     }
@@ -72,7 +72,7 @@ public partial class X2DSUnlimitModule : FhModule {
     // Usage: Overwrite voiceline integers is system_01.bin - subset of voicelines (Not dressphere entry lines...)
     public unsafe void h_TOCtrlATBChr() {
 
-        _TOCtrlATBChr_handle.orig_fptr.Invoke();
+        _TOCtrlATBChr.chain_from(h_TOCtrlATBChr).fnptr!();
 
         byte chr_window_open = FhUtil.get_at<byte>(0xdb747c);
         ushort dressphere = *(ushort*)(h_MsGetChr(chr_window_open) + 0x86e);
@@ -84,7 +84,7 @@ public partial class X2DSUnlimitModule : FhModule {
     //62ab30, 710026cc90 - btsSoundStreamNormal?
     // Usage: Play relevant character's SFX instead of YRP's
     public unsafe uint h_FUN_62AB30(uint chr_id, uint sound_id) {
-        uint original_result = _FUN_62AB30_handle.orig_fptr.Invoke(chr_id, sound_id);
+        uint original_result = _FUN_62AB30.chain_from(h_FUN_62AB30).fnptr!(chr_id, sound_id);
         int chr_base_addr = h_MsGetChr(chr_id);
         int chr_model = *(int*)(chr_base_addr + 4);
 
@@ -193,7 +193,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
         }
 
-        _FUN_534A70_handle.orig_fptr.Invoke(param_1, voice_integer, param_3, param_4,/*FMODCHANNELINDEX*/ param_5, param_6, param_7, param_8, param_9);
+        _FUN_534A70.chain_from(h_FUN_534A70).fnptr!(param_1, voice_integer, param_3, param_4,/*FMODCHANNELINDEX*/ param_5, param_6, param_7, param_8, param_9);
     }
 
 }

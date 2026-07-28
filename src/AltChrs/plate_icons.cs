@@ -24,19 +24,19 @@ public partial class X2DSUnlimitModule : FhModule {
 
         if (icon == 38) // Change invalid Freelancer icon
         {
-            _kyAddPoint3D_handle.orig_fptr.Invoke(grid_x, grid_y, 6, param_4); // draw base
-            _kyAddPoint3D_handle.orig_fptr.Invoke(grid_x, grid_y, 26, param_4); // draw blue pulsing
+            _kyAddPoint3D.chain_from(h_kyAddPoint3D).fnptr!(grid_x, grid_y, 6, param_4); // draw base
+            _kyAddPoint3D.chain_from(h_kyAddPoint3D).fnptr!(grid_x, grid_y, 26, param_4); // draw blue pulsing
             return;
         }
 
         if (icon == 39) // Change invalid Leblanc Goon icon
         {
-            _kyAddPoint3D_handle.orig_fptr.Invoke(grid_x, grid_y, 6, param_4); // draw base
-            _kyAddPoint3D_handle.orig_fptr.Invoke(grid_x, grid_y, 27, param_4); // draw yellow pulsing
+            _kyAddPoint3D.chain_from(h_kyAddPoint3D).fnptr!(grid_x, grid_y, 6, param_4); // draw base
+            _kyAddPoint3D.chain_from(h_kyAddPoint3D).fnptr!(grid_x, grid_y, 27, param_4); // draw yellow pulsing
             return;
         }
 
-        _kyAddPoint3D_handle.orig_fptr.Invoke(grid_x, grid_y, icon, param_4);
+        _kyAddPoint3D.chain_from(h_kyAddPoint3D).fnptr!(grid_x, grid_y, icon, param_4);
     }
 
 }

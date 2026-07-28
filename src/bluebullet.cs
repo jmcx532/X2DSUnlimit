@@ -3,14 +3,15 @@
 /// <summary>
 /// As part of this mod, the data that drives the Abilites menu has been moved to Native allocation.
 /// A side effect of this is that the Blue Bullet menu no longer shows up.
-/// 
+///
 /// These hooks fix this issue.
 /// </summary>
 public partial class X2DSUnlimitModule : FhModule {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate DSAbilityListDataAbilityArray* FUN_00778680();
-    private readonly FhMethodHandle<FUN_00778680> _FUN_00778680_handle; //778680
+    private static FhMethodHandle<FUN_00778680> _FUN_00778680 =>
+        new ( new FhMethodLocation("FFX-2.exe", 0x378680) ); //778680
 
 
     public unsafe DSAbilityListDataAbilityArray* h_FUN_00778680() {
