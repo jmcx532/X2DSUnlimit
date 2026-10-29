@@ -1,9 +1,9 @@
-﻿<Project Sdk="Fahrenheit.Sdk/1.0.0-alpha11">
+﻿<Project Sdk="Fahrenheit.Sdk/1.0.0-alpha12">
     <PropertyGroup>
-        <AssemblyName>X2DSUnlimit</AssemblyName>
-        <AssemblyTitle>X2DSUnlimit</AssemblyTitle>
-        <Product>X2DSUnlimit</Product>
-        <Description>A mod to increase the number of available dresspheres.</Description>
+        <AssemblyName>X2DSUnlimitND</AssemblyName>
+        <AssemblyTitle>X2DSUnlimitND</AssemblyTitle>
+        <Product>X2DSUnlimitND</Product>
+        <Description>A mod to increase the number of available dresspheres. Customized for New Dawn.</Description>
         <Authors>jmcx532</Authors>
         <RepositoryUrl>https://github.com/jmcx532/X2DSUnlimit.git</RepositoryUrl>
         <FhManifestFlags>SEPARATE_SAVES</FhManifestFlags>
