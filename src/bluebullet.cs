@@ -8,15 +8,9 @@
 /// </summary>
 public partial class X2DSUnlimitModule : FhModule {
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public unsafe delegate DSAbilityListDataAbilityArray* FUN_00778680();
-    private static FhMethodHandle<FUN_00778680> _FUN_00778680 =>
-        new ( new FhMethodLocation("FFX-2.exe", 0x378680) ); //778680
+    public unsafe DSAbilityListDataAbilityArray* h_FUN_007785A0() {
 
-
-    public unsafe DSAbilityListDataAbilityArray* h_FUN_00778680() {
-
-        ushort current_dressphere = FhUtil.get_at<ushort>(0x12c0266);
+        ushort current_dressphere = FhUtil.get_at<ushort>(0x12bf266);
         return &ability_list_data_ptr[current_dressphere].Abilities;
 
     }

@@ -6,6 +6,7 @@
 /// 
 /// Here you can set motion data for Freelancer and Leblanc Goon as required, see bottom of file.
 /// See jppc/battle/btl/system_01/mot_system_01.txt for vanilla examples.
+/// 
 /// </summary>
 
 // this is as the data is laid out in system_01.bin - not in game memory!
@@ -43,16 +44,34 @@ public struct MotionChrData {
 public partial class X2DSUnlimitModule : FhModule {
 
     // write correct RamMotionChrData for Freelancer/LG - not in system_01.bin for these 2 dresspheres
-    public unsafe void h_MsSetRamMotionChrData(int chr_id, uint job_id) {
+    public unsafe void h_MsSetRamMotionChrData(uint chr_id, uint job_id) {
         //int job_number = h_MsGetJobNumBasic(job_id);
 
         // handle Freelancer and Leblanc Goon
-        if (job_id >= 0x5020) {
+        if (job_id > 0x501c) {
             _logger.Info("Running for FL/LG");
 
             MotionChrData motion_data = default_motion;
 
+            if (job_id == 0x501D)
+            {
+                motion_data = y_festivalist_motion;
+            }
+
+            if (job_id == 0x501E)
+            {
+                motion_data = r_festivalist_motion;
+            }
+
+            if (job_id == 0x501F)
+            {
+                motion_data = p_festivalist_motion;
+            }
+
             if (job_id == 0x5020) {
+
+                uint chr_addr = (uint)FFX2.FhCall.MsGetChr.fnptr!((uint)chr_id);
+
                 switch (chr_id) {
                     case 0:
                         motion_data = y_freelancer_motion;
@@ -80,7 +99,8 @@ public partial class X2DSUnlimitModule : FhModule {
                 }
             }
 
-            int chr_base = h_MsGetChr((uint)chr_id);
+            Chr* chr = FFX2.FhCall.MsGetChr.fnptr!((uint)chr_id);
+            int chr_base = (int)chr;
 
             *(byte*)(chr_base + 0x75f) = (byte)motion_data.mot_bin_num; //0; //(byte)psVar3[1];
             *(short*)(chr_base + 0x796) = motion_data.round_frame; //(short)freelancer_motion_data[2];//psVar3[2];
@@ -102,10 +122,39 @@ public partial class X2DSUnlimitModule : FhModule {
             *(float*)(chr_base + 0x788) = motion_data.weight / 10000.0f; //50;//(float)*(int*)(psVar3 + 0x1a) / 10000.0;
         }
         else {
-            _MsSetRamMotionChrData.chain_from(h_MsSetRamMotionChrData).fnptr!(chr_id, job_id);
+            FFX2.FhCall.MsSetRamMotionChrData.chain_from(h_MsSetRamMotionChrData).fnptr!(chr_id, job_id);
         }
     }
 
+
+    MotionChrData y_festivalist_motion = new()
+    {
+        chr_id = 0,
+        job_num = 0x1d,
+
+        mot_bin_num = 0,
+        round_frame = 16,
+        attack_frame = 26,
+
+        attack_inc_speed = 32,
+        attack_dec_speed = 32,
+        idle2_prob = 4,
+        steal_frame = 18,
+
+        motion_type = 17,
+        attack_start_dist = 170000,
+        attack_offset_dist = 69997,
+        attack_height = 0,
+
+        run_speed = 420000,
+        run_return_dist = 200000,
+        run_speed_v0 = 0,
+        run_speed_acc = 80000,
+        run_ang_v_max = 211438,
+        run_ang_acc = 35105,
+        weight = 500000,
+
+    };
 
     MotionChrData y_freelancer_motion = new(){
         chr_id = 0,
@@ -138,7 +187,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
     MotionChrData y_leblancgoon_motion = new(){
         chr_id = 0,
-        job_num = 0x20,
+        job_num = 0x21,
 
         mot_bin_num = 0,
         round_frame = 16,
@@ -165,9 +214,10 @@ public partial class X2DSUnlimitModule : FhModule {
     };
 
 
-    MotionChrData r_freelancer_motion = new(){
+    MotionChrData r_festivalist_motion = new()
+    {
         chr_id = 0,
-        job_num = 0x20,
+        job_num = 0x1e,
 
         mot_bin_num = 0,
         round_frame = 16,
@@ -190,13 +240,41 @@ public partial class X2DSUnlimitModule : FhModule {
         run_ang_v_max = 211438,
         run_ang_acc = 35105,
         weight = 500000,
+
+    };
+
+    MotionChrData r_freelancer_motion = new(){
+        chr_id = 1,
+        job_num = 0x20,
+
+        mot_bin_num = 31,
+        round_frame = 16,
+        attack_frame = 32,
+
+        attack_inc_speed = 32,
+        attack_dec_speed = 32,
+        idle2_prob = 4,
+        steal_frame = 18,
+
+        motion_type = 17,
+        attack_start_dist = 150000,
+        attack_offset_dist = 50000,
+        attack_height = 0,
+
+        run_speed = 400000,
+        run_return_dist = 10000,
+        run_speed_v0 = 0,
+        run_speed_acc = 80000,
+        run_ang_v_max = 191983,
+        run_ang_acc = 34903,
+        weight = 400000,
 
     };
 
 
     MotionChrData r_leblancgoon_motion = new(){
         chr_id = 0,
-        job_num = 0x20,
+        job_num = 0x21,
 
         mot_bin_num = 0,
         round_frame = 16,
@@ -222,6 +300,34 @@ public partial class X2DSUnlimitModule : FhModule {
 
     };
 
+    MotionChrData p_festivalist_motion = new()
+    {
+        chr_id = 2,
+        job_num = 0x1f,
+
+        mot_bin_num = 0,
+        round_frame = 8, // 8
+        attack_frame = 38, // 38
+
+        attack_inc_speed = 32,
+        attack_dec_speed = 32,
+        idle2_prob = 4,
+        steal_frame = 0, // 0
+
+        motion_type = 193, // 193
+        attack_start_dist = 100000, // 10 (m 10000)
+        attack_offset_dist = 650000, // 6.5 (m 10000)
+        attack_height = 0, // (m 10000)
+
+        run_speed = 350000, // 35 (m 10000)
+        run_return_dist = 200000, //20 (m 10000)
+        run_speed_v0 = 0, //(m 10000)
+        run_speed_acc = 40000, //4 (m 10000)
+        run_ang_v_max = 261700, //0.2617 (m 1000000)
+        run_ang_acc = 26170, // 0.02617 (m 1000000)
+        weight = 150000, // 150 (m 10000)
+
+    };
 
     MotionChrData p_freelancer_motion = new(){
         chr_id = 0,
@@ -254,7 +360,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
     MotionChrData p_leblancgoon_motion = new(){
         chr_id = 0,
-        job_num = 0x20,
+        job_num = 0x21,
 
         mot_bin_num = 0,
         round_frame = 16,

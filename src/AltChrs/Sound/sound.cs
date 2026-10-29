@@ -15,8 +15,8 @@ public partial class X2DSUnlimitModule : FhModule {
     /// </summary>
     public void h_MsBtlChrGetMem() {
 
-        _MsBtlChrGetMem.chain_from(h_MsBtlChrGetMem).fnptr!();
-        system_01_addr = FhUtil.get_at<nint>(0x9F882C); 
+        FFX2.FhCall.MsBtlChrGetMem.chain_from(h_MsBtlChrGetMem).fnptr!();
+        system_01_addr = FhUtil.get_at<nint>(0x9F782C); 
 
     }
 
@@ -72,10 +72,13 @@ public partial class X2DSUnlimitModule : FhModule {
     // Usage: Overwrite voiceline integers is system_01.bin - subset of voicelines (Not dressphere entry lines...)
     public unsafe void h_TOCtrlATBChr() {
 
-        _TOCtrlATBChr.chain_from(h_TOCtrlATBChr).fnptr!();
+        FFX2.FhCall.TOCtrlATBChr.chain_from(h_TOCtrlATBChr).fnptr!();
 
-        byte chr_window_open = FhUtil.get_at<byte>(0xdb747c);
-        ushort dressphere = *(ushort*)(h_MsGetChr(chr_window_open) + 0x86e);
+        byte chr_window_open = FhUtil.get_at<byte>(0xDB647C);
+        Chr* chr = FFX2.FhCall.MsGetChr.fnptr!(chr_window_open);
+        int chr_base = (int)chr;
+
+        ushort dressphere = *(ushort*)(chr_base + 0x86e);
 
         WriteVoicelines(chr_window_open, dressphere);
     }
@@ -83,9 +86,10 @@ public partial class X2DSUnlimitModule : FhModule {
 
     //62ab30, 710026cc90 - btsSoundStreamNormal?
     // Usage: Play relevant character's SFX instead of YRP's
-    public unsafe uint h_FUN_62AB30(uint chr_id, uint sound_id) {
-        uint original_result = _FUN_62AB30.chain_from(h_FUN_62AB30).fnptr!(chr_id, sound_id);
-        int chr_base_addr = h_MsGetChr(chr_id);
+    public unsafe uint h_FUN_62AB10(uint chr_id, uint sound_id) {
+        uint original_result = FFX2.FhCall.FUN_0022ab10.chain_from(h_FUN_62AB10).fnptr!(chr_id, sound_id);
+        Chr* chr = FFX2.FhCall.MsGetChr.fnptr!(chr_id);
+        int chr_base_addr = (int)chr;
         int chr_model = *(int*)(chr_base_addr + 4);
 
         //if player character model has been replaced and requested sfx is 11 (takes damage) (is sfx_num,not a VL integer), play hurt sound (Requires his bank 1313 to be loaded - by changing wep/w___.bin) (create w0019 and w0020.bin for Fl/LG, can copy and rename an existing one)
@@ -125,15 +129,19 @@ public partial class X2DSUnlimitModule : FhModule {
     /// <param name="param_7"></param>
     /// <param name="param_8"></param>
     /// <param name="param_9"></param> //pointer to start of VoiceIDMapper.txt
-    public unsafe void h_FUN_534A70(int* param_1, int voice_integer, int param_3, int param_4,/*FMODCHANNELINDEX*/ int param_5, int param_6, int* param_7, int* param_8, int* param_9) {
+    public unsafe void h_FUN_534BD0(int* param_1, int voice_integer, int param_3, int param_4,/*FMODCHANNELINDEX*/ int param_5, int param_6, int* param_7, int* param_8, int* param_9) {
         
-        int y_base_addr = h_MsGetChr(0);
-        int r_base_addr = h_MsGetChr(1);
-        int p_base_addr = h_MsGetChr(2);
+        Chr* y_chr = FFX2.FhCall.MsGetChr.fnptr!(0);
+        Chr* r_chr = FFX2.FhCall.MsGetChr.fnptr!(1);
+        Chr* p_chr = FFX2.FhCall.MsGetChr.fnptr!(2);
 
-        bool y_in_vanilla_ds = *(short*)(y_base_addr + 0x86a) != 0x5020 && *(short*)(y_base_addr + 0x86a) != 0x5021;
-        bool r_in_vanilla_ds = *(short*)(r_base_addr + 0x86a) != 0x5020 && *(short*)(r_base_addr + 0x86a) != 0x5021;
-        bool p_in_vanilla_ds = *(short*)(p_base_addr + 0x86a) != 0x5020 && *(short*)(p_base_addr + 0x86a) != 0x5021;
+        int y_base_addr = (int)y_chr;
+        int r_base_addr = (int)r_chr;
+        int p_base_addr = (int)p_chr;
+
+        bool y_in_vanilla_ds = *(short*)(y_base_addr + 0x86a) != 0x501D && *(short*)(y_base_addr + 0x86a) != 0x5020 && *(short*)(y_base_addr + 0x86a) != 0x5021;
+        bool r_in_vanilla_ds = *(short*)(r_base_addr + 0x86a) != 0x501E && *(short*)(r_base_addr + 0x86a) != 0x5020 && *(short*)(r_base_addr + 0x86a) != 0x5021;
+        bool p_in_vanilla_ds = *(short*)(p_base_addr + 0x86a) != 0x501F && *(short*)(p_base_addr + 0x86a) != 0x5020 && *(short*)(p_base_addr + 0x86a) != 0x5021;
 
         //switch statement to stop battle_iop lines playing when character model has been swapped - hurt sound, attack hya
         switch (voice_integer) {
@@ -193,7 +201,7 @@ public partial class X2DSUnlimitModule : FhModule {
 
         }
 
-        _FUN_534A70.chain_from(h_FUN_534A70).fnptr!(param_1, voice_integer, param_3, param_4,/*FMODCHANNELINDEX*/ param_5, param_6, param_7, param_8, param_9);
+        FFX2.FhCall.FUN_00134bd0.chain_from(h_FUN_534BD0).fnptr!(param_1, voice_integer, param_3, param_4,/*FMODCHANNELINDEX*/ param_5, param_6, param_7, param_8, param_9);
     }
 
 }

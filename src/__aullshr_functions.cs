@@ -8,21 +8,17 @@ namespace Fahrenheit.Mods.X2DSUnlimit;
 
 public partial class X2DSUnlimitModule : FhModule
 {
-    public uint h_MsGetSavePlate(uint param_1)
-    {
-        return _MsGetSavePlate.chain_from(h_MsGetSavePlate).fnptr!(param_1);
-    }
 
     /// <summary>
     /// Reads Garment Grid data, builds a list of unique dressphere IDs that are on the grid,.
     ///  Safety hook, this function originally used aullshr() with Garment Grid Data, adding FL/LG (ids: 32, 33) caused crashes
     /// </summary>
     /// <returns>Number of Unique dressphere IDs on current Garment Grid</returns>
-    public unsafe int h_kyGetUsedPoint()
+    public unsafe uint h_kyGetUsedPoint()
     {
 
-        int plate_data_base = FhUtil.get_at<int>(0x9f5fc0);
-        byte current_plate_id = FhUtil.get_at<byte>(0x9f6d78);
+        int plate_data_base = FhUtil.get_at<int>(0x9F4FC0);
+        byte current_plate_id = FhUtil.get_at<byte>(0x9F5D78);
 
         int current_plate_base = plate_data_base + (current_plate_id * 32);
 
@@ -39,7 +35,7 @@ public partial class X2DSUnlimitModule : FhModule
             }
         }
 
-        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9f5fc4);
+        byte* unique_ds_on_grid_list = FhUtil.ptr_at<byte>(0x9F4FC4);
         byte count = 0;
         // Write list to memory
         for (int i = 0; i < dses_on_grid.Length; i++)
@@ -63,7 +59,7 @@ public partial class X2DSUnlimitModule : FhModule
     /// <returns>Dressphere ID - in slot?</returns>
     public uint h_kyIsUsedPoint(uint plate_id, uint gg_slot)
     {
-        return _kyIsUsedPoint.chain_from(h_kyIsUsedPoint).fnptr!(plate_id, gg_slot);
+        return FFX2.FhCall.kyIsUsedPoint.chain_from(h_kyIsUsedPoint).fnptr!(plate_id, gg_slot);
     }
 
     /// <summary>
@@ -72,14 +68,14 @@ public partial class X2DSUnlimitModule : FhModule
     /// <param name="chr_id"></param>
     /// <param name="plate_id"></param>
     /// <returns>Slot ID containing the character's current equipped/highlighted Dressphere</returns>
-    public byte h_kyGetCursorPoint(int chr_id, int plate_id)
+    public byte h_kyGetCursorPoint(uint chr_id, uint plate_id)
     {
         // should prevent crashes with GG slot in memory set to 32 (Freelancer)
         if (chr_id == 0x01000000) {
-            return _kyGetCursorPoint.chain_from(h_kyGetCursorPoint).fnptr!(0, plate_id);
+            return FFX2.FhCall.kyGetCursorPoint.chain_from(h_kyGetCursorPoint).fnptr!(0, plate_id);
         }
 
-        byte slot = _kyGetCursorPoint.chain_from(h_kyGetCursorPoint).fnptr!(chr_id, plate_id);
+        byte slot = FFX2.FhCall.kyGetCursorPoint.chain_from(h_kyGetCursorPoint).fnptr!(chr_id, plate_id);
         return slot;
     }
 
@@ -93,15 +89,15 @@ public partial class X2DSUnlimitModule : FhModule
     {
         const int GARMENT_GRID_COUNT = 64;
         const int GRID_DATA_SIZE = 32;             // bytes of data per grid
-        int plate_data_base = FhUtil.get_at<int>(0x9f5fc0); // base of Garment Grid Data
-        byte* gg_obtain_list = FhUtil.ptr_at<byte>(0x9f5fd8); // DAT_00DF5fd8 is a list of which Garment Grids have been obtained. (Menu oriented, which ones to display in the list.
+        int plate_data_base = FhUtil.get_at<int>(0x9F4FC0); // base of Garment Grid Data
+        byte* gg_obtain_list = FhUtil.ptr_at<byte>(0x9F4FD8); // DAT_00DF5fd8 is a list of which Garment Grids have been obtained. (Menu oriented, which ones to display in the list.
 
         int plate_id = 0;
         int num_plates_with_spheres = 0;
         int num_plates_owned = 0;
         do {
 
-            int plateOwned = (int)h_MsGetSavePlate((uint)plate_id);
+            int plateOwned = (int)FFX2.FhCall.MsGetSavePlate.fnptr!((uint)plate_id);
             if (0 < plateOwned) {
 
                 for (int i = 0; i < GRID_DATA_SIZE; i++) {
@@ -119,7 +115,7 @@ public partial class X2DSUnlimitModule : FhModule
             plate_id = plate_id + 1;
         } while (plate_id < GARMENT_GRID_COUNT);
 
-        FhUtil.set_at<int>(0x9f6d88, num_plates_with_spheres);
+        FhUtil.set_at<int>(0x9F5D88, num_plates_with_spheres);
         return num_plates_owned;
     }
 
